@@ -1,0 +1,1 @@
+../../../Sources/NativAI/Models/DeviceSpecs.swift

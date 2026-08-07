@@ -1,0 +1,1 @@
+../../../Sources/NativAI/Services/EmbeddingService.swift

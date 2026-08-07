@@ -1,0 +1,50 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+
+# Model Weights & Large Binaries
+*.gguf
+*.bin
+*.safetensors
+*.onnx
+*.pth
+*.pt
+*.tflite
+models/
+data/
+cache/
+
+# Xcode & Swift Package Manager Build Outputs
+.build/
+.build_staging/
+.build_tmp/
+.swiftpm/
+DerivedData/
+build/
+*.xcodeproj
+*.xcworkspace
+
+# Installer & Distribution Artifacts
+*.pkg
+*.dmg
+pulltest/
+.enchante-tool-results/
+
+# Node & Python Caches
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc

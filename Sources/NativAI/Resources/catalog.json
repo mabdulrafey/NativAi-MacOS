@@ -1,0 +1,2828 @@
+[
+  {
+    "name": "nomic-embed-text",
+    "display_name": "Nomic Embed Text (137M)",
+    "category": [
+      "embedding"
+    ],
+    "role": "embed",
+    "use_cases": [
+      "embedding"
+    ],
+    "description": "Compact text embedding model for semantic search and retrieval.",
+    "size_gb": 0.22,
+    "min_ram_gb": 2.2,
+    "min_vram_gb": 0.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "mxbai-embed-large",
+    "display_name": "MxBai Embed Large (335M)",
+    "category": [
+      "embedding"
+    ],
+    "role": "embed",
+    "use_cases": [
+      "embedding"
+    ],
+    "description": "High-quality embedding model, larger than nomic-embed-text for better retrieval accuracy.",
+    "size_gb": 0.54,
+    "min_ram_gb": 2.5,
+    "min_vram_gb": 0.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5:0.5b",
+    "display_name": "Qwen 2.5 (0.5B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Extremely lightweight chat model. Runs on almost any hardware, including very old machines.",
+    "size_gb": 0.3,
+    "min_ram_gb": 2.3,
+    "min_vram_gb": 0.3,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen3:0.6b",
+    "display_name": "Qwen 3 (0.6B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Next-gen tiny Qwen chat model. Minimal footprint, fast on any device.",
+    "size_gb": 0.4,
+    "min_ram_gb": 2.4,
+    "min_vram_gb": 0.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "deepseek-r1:1.5b",
+    "display_name": "DeepSeek-R1 (1.5B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa"
+    ],
+    "description": "Small reasoning-focused model distilled from DeepSeek-R1. Good step-by-step reasoning at low cost.",
+    "size_gb": 0.9,
+    "min_ram_gb": 2.9,
+    "min_vram_gb": 0.9,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "gemma:2b",
+    "display_name": "Gemma (2B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Google's original lightweight open chat model.",
+    "size_gb": 1.2,
+    "min_ram_gb": 3.2,
+    "min_vram_gb": 1.3,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "gemma2:2b",
+    "display_name": "Gemma 2 (2B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Improved lightweight Gemma generation. Good balance of speed and quality for constrained machines.",
+    "size_gb": 1.2,
+    "min_ram_gb": 3.2,
+    "min_vram_gb": 1.3,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "gemma4:e2b",
+    "display_name": "Gemma 4 (e2B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Efficient-tier Gemma 4 variant, tuned for very fast responses on modest hardware.",
+    "size_gb": 1.2,
+    "min_ram_gb": 3.2,
+    "min_vram_gb": 1.3,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama3.2:1b",
+    "display_name": "Llama 3.2 (1B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Meta's smallest Llama 3.2 chat model. Great for very low-RAM machines.",
+    "size_gb": 0.6,
+    "min_ram_gb": 2.6,
+    "min_vram_gb": 0.6,
+    "license": "Llama 3.2 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama3.2:3b",
+    "display_name": "Llama 3.2 (3B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Small, capable Llama 3.2 chat model with solid general reasoning for its size.",
+    "size_gb": 1.8,
+    "min_ram_gb": 3.8,
+    "min_vram_gb": 1.9,
+    "license": "Llama 3.2 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "orca-mini:3b",
+    "display_name": "Orca Mini (3B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Compact instruction-tuned model, research-oriented lineage.",
+    "size_gb": 1.8,
+    "min_ram_gb": 3.8,
+    "min_vram_gb": 1.9,
+    "license": "CC-BY-NC (research use)",
+    "commercial_use": false,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen:1.8b",
+    "display_name": "Qwen (1.8B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Original Qwen generation lightweight chat model.",
+    "size_gb": 1.1,
+    "min_ram_gb": 3.1,
+    "min_vram_gb": 1.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5:1.5b",
+    "display_name": "Qwen 2.5 (1.5B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Small Qwen 2.5 chat model, fast on constrained machines.",
+    "size_gb": 0.9,
+    "min_ram_gb": 2.9,
+    "min_vram_gb": 0.9,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5:3b",
+    "display_name": "Qwen 2.5 (3B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Mid-small Qwen 2.5, better reasoning than the 1.5B while still lightweight.",
+    "size_gb": 1.8,
+    "min_ram_gb": 3.8,
+    "min_vram_gb": 1.9,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5-coder:1.5b",
+    "display_name": "Qwen 2.5 Coder (1.5B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Tiny dedicated coding model for constrained machines. Fast completions, lower quality on complex tasks.",
+    "size_gb": 0.9,
+    "min_ram_gb": 2.9,
+    "min_vram_gb": 0.9,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "phi3",
+    "display_name": "Phi-3 (3.8B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "coding"
+    ],
+    "description": "Microsoft's efficient small model, strong reasoning-per-parameter.",
+    "size_gb": 2.3,
+    "min_ram_gb": 4.3,
+    "min_vram_gb": 2.4,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "phi4-mini:3.8b",
+    "display_name": "Phi-4 Mini (3.8B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "coding"
+    ],
+    "description": "Newer, more capable small Phi model. Good default for lightweight machines.",
+    "size_gb": 2.3,
+    "min_ram_gb": 4.3,
+    "min_vram_gb": 2.4,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "codellama:7b",
+    "display_name": "Code Llama (7B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Meta's dedicated code generation model, general-purpose coding assistant.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "deepseek-r1:7b",
+    "display_name": "DeepSeek-R1 (7B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa"
+    ],
+    "description": "Mid-size reasoning model. Strong step-by-step problem solving for its size class.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "deepseek-r1:8b",
+    "display_name": "DeepSeek-R1 (8B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa"
+    ],
+    "description": "Slightly larger DeepSeek-R1 distillation, improved reasoning depth.",
+    "size_gb": 4.8,
+    "min_ram_gb": 6.8,
+    "min_vram_gb": 5.0,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "gemma:7b",
+    "display_name": "Gemma (7B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Original Gemma generation, solid general-purpose chat.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "gemma4:e4b",
+    "display_name": "Gemma 4 (e4B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Efficient-tier Gemma 4 variant, larger than e2B for better quality at similar speed.",
+    "size_gb": 2.4,
+    "min_ram_gb": 4.4,
+    "min_vram_gb": 2.5,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama2:7b",
+    "display_name": "Llama 2 (7B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Meta's previous-generation general chat model.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama3:8b",
+    "display_name": "Llama 3 (8B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Strong general-purpose Llama 3 chat model.",
+    "size_gb": 4.8,
+    "min_ram_gb": 6.8,
+    "min_vram_gb": 5.0,
+    "license": "Llama 3 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "mistral:7b",
+    "display_name": "Mistral (7B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Fast, efficient general-purpose model from Mistral AI.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "neural-chat:7b",
+    "display_name": "Neural Chat (7B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Intel-tuned conversational model, optimized for dialogue quality.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "orca-mini:7b",
+    "display_name": "Orca Mini (7B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Mid-size instruction-tuned research model.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "CC-BY-NC (research use)",
+    "commercial_use": false,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen:7b",
+    "display_name": "Qwen (7B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Original Qwen generation, capable general-purpose chat model.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5:7b",
+    "display_name": "Qwen 2.5 (7B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Strong all-rounder in the Qwen 2.5 family — good chat, reasoning, and code discussion.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5-coder:7b",
+    "display_name": "Qwen 2.5 Coder (7B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Best default dedicated coding model for most machines. Strong at generation, completion, and debugging.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen3.5:4b",
+    "display_name": "Qwen 3.5 (4B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Newer-generation compact Qwen model with improved reasoning per parameter.",
+    "size_gb": 2.4,
+    "min_ram_gb": 4.4,
+    "min_vram_gb": 2.5,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "vicuna:7b",
+    "display_name": "Vicuna (7B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Community fine-tune known for natural conversational style.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Non-commercial (research)",
+    "commercial_use": false,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "x/flux2-klein:4b",
+    "display_name": "Flux.2 Klein (4B)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "marketing",
+      "design",
+      "content_creation"
+    ],
+    "description": "Fast, lightweight text-to-image model. Fits fully within 8GB VRAM for quick renders.",
+    "size_gb": 5.73,
+    "min_ram_gb": 7.7,
+    "min_vram_gb": 6.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "x/flux2-klein:9b",
+    "display_name": "Flux.2 Klein (9B)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "content_creation"
+    ],
+    "description": "Higher visual fidelity than the 4B variant. Non-commercial license. Spills into system RAM if VRAM is under 12GB.",
+    "size_gb": 11.97,
+    "min_ram_gb": 14.0,
+    "min_vram_gb": 12.6,
+    "license": "Non-commercial",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "codellama:13b",
+    "display_name": "Code Llama (13B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Larger Code Llama, better completions and understanding of larger codebases.",
+    "size_gb": 7.8,
+    "min_ram_gb": 9.8,
+    "min_vram_gb": 8.2,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "deepseek-r1:14b",
+    "display_name": "DeepSeek-R1 (14B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa"
+    ],
+    "description": "Larger reasoning distillation, noticeably stronger multi-step problem solving.",
+    "size_gb": 8.4,
+    "min_ram_gb": 10.4,
+    "min_vram_gb": 8.8,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "gemma4:12b",
+    "display_name": "Gemma 4 (12B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Mid-size Gemma 4, strong general reasoning for a single-GPU setup.",
+    "size_gb": 7.2,
+    "min_ram_gb": 9.2,
+    "min_vram_gb": 7.6,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "llama2:13b",
+    "display_name": "Llama 2 (13B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Larger previous-gen Llama chat model.",
+    "size_gb": 7.8,
+    "min_ram_gb": 9.8,
+    "min_vram_gb": 8.2,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "llama3.2-vision:11b",
+    "display_name": "Llama 3.2 Vision (11B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Multimodal Llama — understands images alongside text in the same conversation.",
+    "size_gb": 6.6,
+    "min_ram_gb": 8.6,
+    "min_vram_gb": 6.9,
+    "license": "Llama 3.2 Community License",
+    "commercial_use": true,
+    "speed_tier": "medium",
+    "supports_vision": true
+  },
+  {
+    "name": "mistral-nemo:12b",
+    "display_name": "Mistral NeMo (12B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Mistral/NVIDIA collaboration model with a large context window.",
+    "size_gb": 7.2,
+    "min_ram_gb": 9.2,
+    "min_vram_gb": 7.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "orca-mini:13b",
+    "display_name": "Orca Mini (13B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Larger instruction-tuned research model.",
+    "size_gb": 7.8,
+    "min_ram_gb": 9.8,
+    "min_vram_gb": 8.2,
+    "license": "CC-BY-NC (research use)",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "phi3:14b",
+    "display_name": "Phi-3 (14B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Larger Phi-3 variant with stronger reasoning depth.",
+    "size_gb": 8.4,
+    "min_ram_gb": 10.4,
+    "min_vram_gb": 8.8,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "phi4:14b",
+    "display_name": "Phi-4 (14B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Latest-generation Phi model — strong reasoning and math for a single-GPU setup.",
+    "size_gb": 8.4,
+    "min_ram_gb": 10.4,
+    "min_vram_gb": 8.8,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen:14b",
+    "display_name": "Qwen (14B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Larger original-generation Qwen chat model.",
+    "size_gb": 8.4,
+    "min_ram_gb": 10.4,
+    "min_vram_gb": 8.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen2.5:14b",
+    "display_name": "Qwen 2.5 (14B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Strong mid-size all-rounder — noticeably better reasoning than the 7B.",
+    "size_gb": 8.4,
+    "min_ram_gb": 10.4,
+    "min_vram_gb": 8.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen3:14b",
+    "display_name": "Qwen 3 (14B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Next-gen Qwen 3 at mid size — improved reasoning, tool-use, and coding support.",
+    "size_gb": 8.4,
+    "min_ram_gb": 10.4,
+    "min_vram_gb": 8.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "vicuna:13b",
+    "display_name": "Vicuna (13B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Larger community fine-tune, natural conversational style.",
+    "size_gb": 7.8,
+    "min_ram_gb": 9.8,
+    "min_vram_gb": 8.2,
+    "license": "Non-commercial (research)",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "codestral:22b",
+    "display_name": "Codestral (22B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Mistral's dedicated large coding model — strong at completion across many languages.",
+    "size_gb": 13.2,
+    "min_ram_gb": 15.2,
+    "min_vram_gb": 13.9,
+    "license": "Mistral Non-Production License",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "deepseek-coder-v2:16b",
+    "display_name": "DeepSeek-Coder V2 (16B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Alternative dedicated coder with strong multi-language support and repo-level context handling.",
+    "size_gb": 9.6,
+    "min_ram_gb": 11.6,
+    "min_vram_gb": 10.1,
+    "license": "DeepSeek License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "devstral:24b",
+    "display_name": "Devstral (24B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Mistral's agentic coding model, tuned for autonomous multi-step coding tasks.",
+    "size_gb": 14.4,
+    "min_ram_gb": 16.4,
+    "min_vram_gb": 15.1,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "gpt-oss:20b",
+    "display_name": "GPT-OSS (20B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "description": "OpenAI's open-weight reasoning model at a size that fits a single high-end GPU.",
+    "size_gb": 12.0,
+    "min_ram_gb": 14.0,
+    "min_vram_gb": 12.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "mistral-small:24b",
+    "display_name": "Mistral Small (24B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Capable mid-large all-rounder from Mistral, good balance of speed and quality.",
+    "size_gb": 14.4,
+    "min_ram_gb": 16.4,
+    "min_vram_gb": 15.1,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "codellama:34b",
+    "display_name": "Code Llama (34B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Large Code Llama variant — strong repo-level coding assistant, needs a capable machine.",
+    "size_gb": 20.4,
+    "min_ram_gb": 22.4,
+    "min_vram_gb": 21.4,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "deepseek-r1:32b",
+    "display_name": "DeepSeek-R1 (32B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa"
+    ],
+    "description": "Large reasoning distillation — approaches frontier-class step-by-step problem solving.",
+    "size_gb": 19.2,
+    "min_ram_gb": 21.2,
+    "min_vram_gb": 20.2,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "gemma2:27b",
+    "display_name": "Gemma 2 (27B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Large Gemma 2 variant, strong general reasoning for a capable single-GPU rig.",
+    "size_gb": 16.2,
+    "min_ram_gb": 18.2,
+    "min_vram_gb": 17.0,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "gemma4:26b",
+    "display_name": "Gemma 4 (26B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Large Gemma 4, meaningfully stronger reasoning than the 12B tier.",
+    "size_gb": 15.6,
+    "min_ram_gb": 17.6,
+    "min_vram_gb": 16.4,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "gemma4:31b",
+    "display_name": "Gemma 4 (31B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Largest single-GPU-friendly Gemma 4 tier.",
+    "size_gb": 18.6,
+    "min_ram_gb": 20.6,
+    "min_vram_gb": 19.5,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen2.5:32b",
+    "display_name": "Qwen 2.5 (32B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Large Qwen 2.5 — strong all-around performance, needs a capable machine.",
+    "size_gb": 19.2,
+    "min_ram_gb": 21.2,
+    "min_vram_gb": 20.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen2.5-coder:32b",
+    "display_name": "Qwen 2.5 Coder (32B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "High-end dedicated coding model. Best code quality, needs a capable/high-end machine.",
+    "size_gb": 19.2,
+    "min_ram_gb": 21.2,
+    "min_vram_gb": 20.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen3-coder:30b",
+    "display_name": "Qwen 3 Coder (30B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Top recommendation for agentic coding and large repositories — 256K context, Mixture-of-Experts speed.",
+    "size_gb": 18.0,
+    "min_ram_gb": 20.0,
+    "min_vram_gb": 18.9,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen3.6:27b",
+    "display_name": "Qwen 3.6 (27B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Best overall general-purpose model for a single GPU — strong coding, reasoning, vision, and tool-use.",
+    "size_gb": 16.2,
+    "min_ram_gb": 18.2,
+    "min_vram_gb": 17.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "vicuna:33b",
+    "display_name": "Vicuna (33B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Largest Vicuna community fine-tune.",
+    "size_gb": 19.8,
+    "min_ram_gb": 21.8,
+    "min_vram_gb": 20.8,
+    "license": "Non-commercial (research)",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "codellama:70b",
+    "display_name": "Code Llama (70B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Largest Code Llama — top-tier code quality, requires a high-end workstation.",
+    "size_gb": 42.0,
+    "min_ram_gb": 44.0,
+    "min_vram_gb": 44.1,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "deepseek-r1:70b",
+    "display_name": "DeepSeek-R1 (70B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa"
+    ],
+    "description": "Large-scale reasoning distillation — near-frontier problem-solving depth.",
+    "size_gb": 42.0,
+    "min_ram_gb": 44.0,
+    "min_vram_gb": 44.1,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "llama2:70b",
+    "display_name": "Llama 2 (70B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Largest previous-gen Llama chat model.",
+    "size_gb": 42.0,
+    "min_ram_gb": 44.0,
+    "min_vram_gb": 44.1,
+    "license": "Llama 2 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "llama3:70b",
+    "display_name": "Llama 3 (70B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Large, high-quality general-purpose Llama 3 chat model.",
+    "size_gb": 42.0,
+    "min_ram_gb": 44.0,
+    "min_vram_gb": 44.1,
+    "license": "Llama 3 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "llama3.1:70b",
+    "display_name": "Llama 3.1 (70B)",
+    "category": [
+      "research",
+      "qa",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "coding",
+      "general_chat"
+    ],
+    "description": "Much higher quality reasoning for research-grade work. Needs a high-end machine.",
+    "size_gb": 42.0,
+    "min_ram_gb": 44.0,
+    "min_vram_gb": 44.1,
+    "license": "Llama 3.1 Community License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "llama3.2-vision:90b",
+    "display_name": "Llama 3.2 Vision (90B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Largest multimodal Llama — frontier-tier image + text understanding.",
+    "size_gb": 54.0,
+    "min_ram_gb": 56.0,
+    "min_vram_gb": 56.7,
+    "license": "Llama 3.2 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow",
+    "supports_vision": true
+  },
+  {
+    "name": "llama3.3:70b",
+    "display_name": "Llama 3.3 (70B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "The workhorse for general chat at frontier quality. Best suited for high-end rigs with 48GB+ memory.",
+    "size_gb": 42.0,
+    "min_ram_gb": 44.0,
+    "min_vram_gb": 44.1,
+    "license": "Llama 3.3 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "qwen:72b",
+    "display_name": "Qwen (72B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Largest original-generation Qwen chat model.",
+    "size_gb": 43.2,
+    "min_ram_gb": 45.2,
+    "min_vram_gb": 45.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "qwen2.5:72b",
+    "display_name": "Qwen 2.5 (72B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Largest Qwen 2.5 — top-tier all-around quality for a high-end workstation.",
+    "size_gb": 43.2,
+    "min_ram_gb": 45.2,
+    "min_vram_gb": 45.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "qwen3:72b",
+    "display_name": "Qwen 3 (72B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Largest Qwen 3 — frontier-adjacent reasoning, coding, and tool-use.",
+    "size_gb": 43.2,
+    "min_ram_gb": 45.2,
+    "min_vram_gb": 45.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "deepseek-coder-v2:236b",
+    "display_name": "DeepSeek-Coder V2 (236B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Frontier-scale Mixture-of-Experts coding model. Requires a multi-GPU workstation or server-class machine.",
+    "size_gb": 141.6,
+    "min_ram_gb": 143.6,
+    "min_vram_gb": 148.7,
+    "license": "DeepSeek License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "deepseek-r1:671b",
+    "display_name": "DeepSeek-R1 (671B)",
+    "category": [
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research"
+    ],
+    "description": "Full frontier-scale reasoning model — performance approaching O3/Gemini 2.5 Pro class. Needs server-class hardware.",
+    "size_gb": 402.6,
+    "min_ram_gb": 404.6,
+    "min_vram_gb": 422.7,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "gpt-oss:120b",
+    "display_name": "GPT-OSS (120B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "description": "Frontier-class local reasoning option from OpenAI's open-weight release.",
+    "size_gb": 70.1,
+    "min_ram_gb": 72.1,
+    "min_vram_gb": 73.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "llama3.1:405b",
+    "display_name": "Llama 3.1 (405B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "description": "Meta's largest open Llama — frontier-class quality, requires a multi-GPU server.",
+    "size_gb": 243.0,
+    "min_ram_gb": 245.0,
+    "min_vram_gb": 255.2,
+    "license": "Llama 3.1 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "llama4-scout:109b",
+    "display_name": "Llama 4 Scout (109B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Meta's Llama 4 entry-frontier model with a very large context window.",
+    "size_gb": 65.4,
+    "min_ram_gb": 67.4,
+    "min_vram_gb": 68.7,
+    "license": "Llama 4 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "llama4-maverick:400b",
+    "display_name": "Llama 4 Maverick (400B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Meta's largest Llama 4 variant — frontier-class multimodal reasoning.",
+    "size_gb": 240.0,
+    "min_ram_gb": 242.0,
+    "min_vram_gb": 252.0,
+    "license": "Llama 4 Community License",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "qwen3:235b",
+    "display_name": "Qwen 3 (235B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Largest Qwen 3 Mixture-of-Experts model — frontier-class general capability.",
+    "size_gb": 141.0,
+    "min_ram_gb": 143.0,
+    "min_vram_gb": 148.1,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "glm-5.1",
+    "display_name": "GLM 5.1",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Zhipu AI's general-purpose chat model.",
+    "size_gb": 20,
+    "min_ram_gb": 22,
+    "min_vram_gb": 21.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "glm-5.2",
+    "display_name": "GLM 5.2",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Newer GLM generation with improved reasoning and coding support.",
+    "size_gb": 22,
+    "min_ram_gb": 24,
+    "min_vram_gb": 23.1,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "kimi-k3",
+    "display_name": "Kimi K3",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Moonshot AI's long-context chat model.",
+    "size_gb": 18,
+    "min_ram_gb": 20,
+    "min_vram_gb": 18.9,
+    "license": "Modified MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "minimax-m2.7",
+    "display_name": "MiniMax M2.7",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "MiniMax general-purpose reasoning model.",
+    "size_gb": 16,
+    "min_ram_gb": 18,
+    "min_vram_gb": 16.8,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "minimax-m3",
+    "display_name": "MiniMax M3",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Newer MiniMax generation with stronger coding and agentic support.",
+    "size_gb": 18,
+    "min_ram_gb": 20,
+    "min_vram_gb": 18.9,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "nemotron-3-super",
+    "display_name": "Nemotron 3 Super",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "NVIDIA's tuned reasoning model, optimized for accuracy on complex queries.",
+    "size_gb": 24,
+    "min_ram_gb": 26,
+    "min_vram_gb": 25.2,
+    "license": "NVIDIA Open Model License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "x/z-image-turbo:fp8",
+    "display_name": "Z-Image Turbo (fp8)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "marketing",
+      "ui_mockups"
+    ],
+    "description": "Excellent legible text-in-image rendering (English + Chinese). Offloads to system RAM beyond 8GB VRAM.",
+    "size_gb": 12.77,
+    "min_ram_gb": 14.8,
+    "min_vram_gb": 13.4,
+    "license": "Check per release",
+    "commercial_use": null,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "x/z-image-turbo:bf16",
+    "display_name": "Z-Image Turbo (bf16)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "marketing",
+      "ui_mockups"
+    ],
+    "description": "Full-precision, workstation-grade version. Best quality, largest download.",
+    "size_gb": 32.85,
+    "min_ram_gb": 34.9,
+    "min_vram_gb": 34.5,
+    "license": "Check per release",
+    "commercial_use": null,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "lfm2:24b",
+    "display_name": "LFM2 24B",
+    "category": [
+      "general"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "research",
+      "writing"
+    ],
+    "description": "Large hybrid text model from Liquid AI, designed for efficient on-device deployment. Not an image generator.",
+    "size_gb": 13.4,
+    "min_ram_gb": 15.4,
+    "min_vram_gb": 14.1,
+    "license": "LFM Open License",
+    "commercial_use": null,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen3-coder-next:80b",
+    "display_name": "Qwen3-Coder-Next (80B-A3B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "High-memory Mixture-of-Experts pick for coding and agentic tasks. Requires a workstation that can hold a 52GB Q4 artifact.",
+    "size_gb": 52,
+    "min_ram_gb": 54,
+    "min_vram_gb": 54.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "llava:7b",
+    "display_name": "LLaVA (7B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Vision-language model — understands and discusses images alongside text. Distinct from image generation.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast",
+    "supports_vision": true
+  },
+  {
+    "name": "llava:13b",
+    "display_name": "LLaVA (13B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Larger LLaVA vision-language model with improved image understanding.",
+    "size_gb": 7.8,
+    "min_ram_gb": 9.8,
+    "min_vram_gb": 8.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium",
+    "supports_vision": true
+  },
+  {
+    "name": "llava:34b",
+    "display_name": "LLaVA (34B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Largest LLaVA variant — best image understanding quality, needs a capable machine.",
+    "size_gb": 20.4,
+    "min_ram_gb": 22.4,
+    "min_vram_gb": 21.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium",
+    "supports_vision": true
+  },
+  {
+    "name": "starcoder2:3b",
+    "display_name": "StarCoder2 (3B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "BigCode's compact dedicated coding model. Fast, lightweight code completion.",
+    "size_gb": 1.8,
+    "min_ram_gb": 3.8,
+    "min_vram_gb": 1.9,
+    "license": "BigCode OpenRAIL-M",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "starcoder2:7b",
+    "display_name": "StarCoder2 (7B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Mid-size StarCoder2 — strong general coding assistant across many languages.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "BigCode OpenRAIL-M",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "starcoder2:15b",
+    "display_name": "StarCoder2 (15B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Largest StarCoder2 — top code quality in the family, needs a capable machine.",
+    "size_gb": 9.0,
+    "min_ram_gb": 11.0,
+    "min_vram_gb": 9.5,
+    "license": "BigCode OpenRAIL-M",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "wizardlm2:7b",
+    "display_name": "WizardLM 2 (7B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Microsoft fine-tune known for strong complex instruction-following.",
+    "size_gb": 4.2,
+    "min_ram_gb": 6.2,
+    "min_vram_gb": 4.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "solar:10.7b",
+    "display_name": "Solar (10.7B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Upstage's compact but strong general model, known for efficiency relative to size.",
+    "size_gb": 6.4,
+    "min_ram_gb": 8.4,
+    "min_vram_gb": 6.7,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "command-r:35b",
+    "display_name": "Command R (35B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "description": "Cohere's model, notably strong at retrieval-augmented generation and tool use.",
+    "size_gb": 21.0,
+    "min_ram_gb": 23.0,
+    "min_vram_gb": 22.1,
+    "license": "CC-BY-NC (research use)",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "command-r-plus:104b",
+    "display_name": "Command R+ (104B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "description": "Larger Cohere model — frontier-adjacent RAG and tool-use performance.",
+    "size_gb": 62.4,
+    "min_ram_gb": 64.4,
+    "min_vram_gb": 65.5,
+    "license": "CC-BY-NC (research use)",
+    "commercial_use": false,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "yi:6b",
+    "display_name": "Yi (6B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "01.AI's compact bilingual (English/Chinese) general chat model.",
+    "size_gb": 3.6,
+    "min_ram_gb": 5.6,
+    "min_vram_gb": 3.8,
+    "license": "Yi License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "yi:9b",
+    "display_name": "Yi (9B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Mid-size Yi model with improved bilingual reasoning.",
+    "size_gb": 5.4,
+    "min_ram_gb": 7.4,
+    "min_vram_gb": 5.7,
+    "license": "Yi License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "yi:34b",
+    "display_name": "Yi (34B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Largest Yi variant — strong bilingual general-purpose quality.",
+    "size_gb": 20.4,
+    "min_ram_gb": 22.4,
+    "min_vram_gb": 21.4,
+    "license": "Yi License",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "granite3:8b",
+    "display_name": "Granite 3 (8B)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "IBM's enterprise-oriented open model, tuned for reliability and safety.",
+    "size_gb": 4.8,
+    "min_ram_gb": 6.8,
+    "min_vram_gb": 5.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "dolphin-mixtral:8x7b",
+    "display_name": "Dolphin Mixtral (8x7B)",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Community fine-tune of Mixtral with fewer default content restrictions.",
+    "size_gb": 28.2,
+    "min_ram_gb": 30.2,
+    "min_vram_gb": 29.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "phi3:mini",
+    "display_name": "Phi-3 Mini",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "coding"
+    ],
+    "description": "Microsoft's efficient small model (Ollama default 'mini' tag).",
+    "size_gb": 2.3,
+    "min_ram_gb": 4.3,
+    "min_vram_gb": 2.4,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "phi3.5:latest",
+    "display_name": "Phi-3.5",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "coding"
+    ],
+    "description": "Newer Phi-3.5 generation, improved reasoning over Phi-3 Mini at a similar size.",
+    "size_gb": 2.2,
+    "min_ram_gb": 4.2,
+    "min_vram_gb": 2.3,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama3.1:latest",
+    "display_name": "Llama 3.1",
+    "category": [
+      "research",
+      "qa",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "marketing",
+      "coding",
+      "general_chat"
+    ],
+    "description": "Meta's Llama 3.1 default tag (typically resolves to the 8B variant).",
+    "size_gb": 4.7,
+    "min_ram_gb": 6.7,
+    "min_vram_gb": 4.9,
+    "license": "Llama 3.1 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama3:latest",
+    "display_name": "Llama 3",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Meta's Llama 3 default tag.",
+    "size_gb": 4.7,
+    "min_ram_gb": 6.7,
+    "min_vram_gb": 4.9,
+    "license": "Llama 3 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5:latest",
+    "display_name": "Qwen 2.5",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research",
+      "coding"
+    ],
+    "description": "Qwen 2.5 default tag.",
+    "size_gb": 4.4,
+    "min_ram_gb": 6.4,
+    "min_vram_gb": 4.6,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "mistral:latest",
+    "display_name": "Mistral",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Mistral AI's default tag.",
+    "size_gb": 4.1,
+    "min_ram_gb": 6.1,
+    "min_vram_gb": 4.3,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "gemma2:latest",
+    "display_name": "Gemma 2",
+    "category": [
+      "qa",
+      "research"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "research"
+    ],
+    "description": "Google's Gemma 2 default tag.",
+    "size_gb": 5.4,
+    "min_ram_gb": 7.4,
+    "min_vram_gb": 5.7,
+    "license": "Gemma License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llama3.1:8b",
+    "display_name": "Llama 3.1 (8B)",
+    "category": [
+      "research",
+      "qa",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "marketing",
+      "coding",
+      "general_chat"
+    ],
+    "description": "Strong general-purpose reasoning and conversation model. Great default for research, Q&A, and discussing code.",
+    "size_gb": 4.7,
+    "min_ram_gb": 8,
+    "min_vram_gb": 6,
+    "license": "Llama 3.1 Community License",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "moondream:1.8b",
+    "display_name": "Moondream (1.8B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Tiny, fast vision-language model — great for quick image understanding on constrained machines.",
+    "size_gb": 0.8,
+    "min_ram_gb": 2.8,
+    "min_vram_gb": 0.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "bakllava:7b",
+    "display_name": "BakLLaVA (7B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Mistral-based vision-language model, alternative to LLaVA with a different base architecture.",
+    "size_gb": 3.8,
+    "min_ram_gb": 5.8,
+    "min_vram_gb": 4.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llava-llama3:8b",
+    "display_name": "LLaVA-Llama3 (8B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "LLaVA vision capability fine-tuned onto a Llama 3 base — combines Llama 3's reasoning with image understanding.",
+    "size_gb": 4.6,
+    "min_ram_gb": 6.6,
+    "min_vram_gb": 4.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "llava-phi3:3.8b",
+    "display_name": "LLaVA-Phi3 (3.8B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Compact vision-language model built on Phi-3 — good image understanding for lightweight machines.",
+    "size_gb": 2.2,
+    "min_ram_gb": 4.2,
+    "min_vram_gb": 2.3,
+    "license": "MIT",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "minicpm-v:8b",
+    "display_name": "MiniCPM-V (8B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Strong image understanding with efficient inference, known for good OCR/document-reading capability.",
+    "size_gb": 4.1,
+    "min_ram_gb": 6.1,
+    "min_vram_gb": 4.3,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "granite3.2-vision",
+    "display_name": "Granite 3.2 Vision (2B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "IBM's document-focused vision model — specializes in reading scanned documents, tables, and charts (including image-based PDF pages), not just photos.",
+    "size_gb": 1.4,
+    "min_ram_gb": 3.4,
+    "min_vram_gb": 1.5,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5vl:3b",
+    "display_name": "Qwen 2.5-VL (3B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Compact vision-language model with strong document/OCR reading ability — good for scanned PDFs and tables on lightweight machines.",
+    "size_gb": 3.0,
+    "min_ram_gb": 5.0,
+    "min_vram_gb": 3.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5vl:7b",
+    "display_name": "Qwen 2.5-VL (7B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Strong general vision-language model with excellent document/OCR reading — reliably extracts text from scanned pages, tables, and charts.",
+    "size_gb": 5.6,
+    "min_ram_gb": 7.6,
+    "min_vram_gb": 5.9,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5vl:32b",
+    "display_name": "Qwen 2.5-VL (32B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Large Qwen 2.5-VL — top-tier document understanding and general vision reasoning, needs a capable machine.",
+    "size_gb": 19.7,
+    "min_ram_gb": 21.7,
+    "min_vram_gb": 20.7,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "qwen2.5vl:72b",
+    "display_name": "Qwen 2.5-VL (72B)",
+    "category": [
+      "research",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "research",
+      "qa",
+      "general_chat"
+    ],
+    "supports_vision": true,
+    "description": "Largest Qwen 2.5-VL — frontier-class document/vision understanding, requires a high-end workstation.",
+    "size_gb": 45.4,
+    "min_ram_gb": 47.4,
+    "min_vram_gb": 47.7,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "x/flux2-klein:4b-fp4",
+    "display_name": "Flux.2 Klein (4B, fp4)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "marketing",
+      "design",
+      "content_creation"
+    ],
+    "description": "Same weights as the default 4B tag (fp4 quantisation) — pick either. Fits fully within 8GB VRAM.",
+    "size_gb": 5.73,
+    "min_ram_gb": 7.7,
+    "min_vram_gb": 6.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "x/flux2-klein:4b-fp8",
+    "display_name": "Flux.2 Klein (4B, fp8)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "marketing",
+      "design",
+      "content_creation"
+    ],
+    "description": "Higher-precision 4B. Noticeably cleaner fine detail than fp4 for a ~4GB larger download.",
+    "size_gb": 9.45,
+    "min_ram_gb": 11.4,
+    "min_vram_gb": 9.9,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "x/flux2-klein:4b-bf16",
+    "display_name": "Flux.2 Klein (4B, bf16)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "marketing",
+      "design",
+      "content_creation"
+    ],
+    "description": "Full-precision 4B. Best quality this family offers without moving to the 9B weights.",
+    "size_gb": 15.98,
+    "min_ram_gb": 18.0,
+    "min_vram_gb": 16.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "x/flux2-klein:9b-fp4",
+    "display_name": "Flux.2 Klein (9B, fp4)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "content_creation"
+    ],
+    "description": "Same weights as the default 9B tag (fp4 quantisation) — pick either. Non-commercial licence.",
+    "size_gb": 11.97,
+    "min_ram_gb": 14.0,
+    "min_vram_gb": 12.6,
+    "license": "Non-commercial",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "x/flux2-klein:9b-fp8",
+    "display_name": "Flux.2 Klein (9B, fp8)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "content_creation"
+    ],
+    "description": "Higher-precision 9B. Needs 24GB+ of unified memory to stay resident. Non-commercial licence.",
+    "size_gb": 20.24,
+    "min_ram_gb": 22.2,
+    "min_vram_gb": 21.3,
+    "license": "Non-commercial",
+    "commercial_use": false,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "x/flux2-klein:9b-bf16",
+    "display_name": "Flux.2 Klein (9B, bf16)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "content_creation"
+    ],
+    "description": "Full-precision 9B — workstation only. Highest fidelity in the Klein family. Non-commercial licence.",
+    "size_gb": 34.72,
+    "min_ram_gb": 36.7,
+    "min_vram_gb": 36.5,
+    "license": "Non-commercial",
+    "commercial_use": false,
+    "speed_tier": "slow"
+  },
+  {
+    "name": "x/z-image-turbo",
+    "display_name": "Z-Image Turbo",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "design",
+      "marketing",
+      "ui_mockups"
+    ],
+    "description": "Default Z-Image Turbo tag (same weights as fp8). Strongest legible text-in-image rendering (English + Chinese).",
+    "size_gb": 12.77,
+    "min_ram_gb": 14.8,
+    "min_vram_gb": 13.4,
+    "license": "Check per release",
+    "commercial_use": null,
+    "speed_tier": "medium"
+  },
+  {
+    "name": "smollm2:1.7b",
+    "display_name": "SmolLM2 (1.7B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Ultra-lightweight Hugging Face SmolLM2 1.7B chat model. Extremely fast execution and low memory usage.",
+    "size_gb": 1.0,
+    "min_ram_gb": 3.0,
+    "min_vram_gb": 1.1,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "smollm2:360m",
+    "display_name": "SmolLM2 (360M)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Ultra-compact 360M text model. Instant response times even on older hardware.",
+    "size_gb": 0.25,
+    "min_ram_gb": 2.2,
+    "min_vram_gb": 0.3,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5-coder:0.5b",
+    "display_name": "Qwen 2.5 Coder (0.5B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Tiny code model from Alibaba. Provides fast code completion and syntax assistance on low-RAM machines.",
+    "size_gb": 0.4,
+    "min_ram_gb": 2.4,
+    "min_vram_gb": 0.4,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "qwen2.5-coder:1.5b",
+    "display_name": "Qwen 2.5 Coder (1.5B)",
+    "category": [
+      "coding"
+    ],
+    "role": "coder",
+    "use_cases": [
+      "coding"
+    ],
+    "description": "Compact 1.5B specialized coding assistant. Runs smoothly on 8GB Macs.",
+    "size_gb": 1.0,
+    "min_ram_gb": 3.0,
+    "min_vram_gb": 1.1,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "tinyllama:1.1b",
+    "display_name": "TinyLlama (1.1B)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Compact 1.1B open model trained on 3 trillion tokens. Fast response on modest hardware.",
+    "size_gb": 0.63,
+    "min_ram_gb": 2.6,
+    "min_vram_gb": 0.7,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "granite3-dense:2b",
+    "display_name": "Granite 3.0 Dense (2B)",
+    "category": [
+      "coding",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "coding",
+      "qa",
+      "general_chat"
+    ],
+    "description": "IBM's lightweight Granite 3.0 2B model. Tuned for enterprise text and coding tasks on modest hardware.",
+    "size_gb": 1.4,
+    "min_ram_gb": 3.4,
+    "min_vram_gb": 1.5,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "moondream:1.8b",
+    "display_name": "Moondream 2 (1.8B Vision)",
+    "category": [
+      "vision",
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat",
+      "design"
+    ],
+    "description": "Tiny vision-language model. Reads and describes images on low-spec Macs.",
+    "size_gb": 1.7,
+    "min_ram_gb": 3.7,
+    "min_vram_gb": 1.8,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast",
+    "supports_vision": true
+  },
+  {
+    "name": "x/flux2-klein:4b",
+    "display_name": "Flux.2 Klein (4B)",
+    "category": [
+      "image_gen"
+    ],
+    "role": "image",
+    "use_cases": [
+      "marketing",
+      "design",
+      "content_creation"
+    ],
+    "description": "Lightweight 4B image generation model. Fits comfortably on 8GB RAM Macs.",
+    "size_gb": 5.73,
+    "min_ram_gb": 7.7,
+    "min_vram_gb": 6.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  },
+  {
+    "name": "smollm2:135m",
+    "display_name": "SmolLM2 (135M)",
+    "category": [
+      "qa"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "qa",
+      "general_chat"
+    ],
+    "description": "Micro 135M text model from Hugging Face. Instantaneous generation on low-end machines.",
+    "size_gb": 0.1,
+    "min_ram_gb": 2.0,
+    "min_vram_gb": 0.2,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "fast"
+  }
+]
