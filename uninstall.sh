@@ -209,10 +209,11 @@ fi
 if [[ "${REMOVE_MODELS}" == true ]]; then
     echo ""
     echo "Deleting downloaded models…"
-    remove_path "${MODELS_DIR}" "all downloaded models"
-    # ~/.ollama also holds the server's keypair and cache. Removed only when
-    # Ollama itself is going, so keeping Ollama doesn't lose its identity — a new
-    # keypair would look like a different machine to any registry it talks to.
+    remove_path "${MODELS_DIR}" "Ollama LLM models"
+    remove_path "${SUPPORT_DIR}/CoreMLModels" "CoreML Stable Diffusion models"
+    remove_path "${HOME}/Library/Caches/CoreML" "CoreML model cache"
+    remove_path "${HOME}/Library/Caches/com.apple.metal" "Metal GPU shader cache"
+
     if [[ "${REMOVE_OLLAMA}" == true ]]; then
         remove_path "${OLLAMA_HOME}" "Ollama data directory"
     fi

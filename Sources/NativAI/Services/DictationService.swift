@@ -176,6 +176,8 @@ final class DictationService: NSObject, ObservableObject {
         }
         self.request = request
 
+        setupAudioEngineObservers()
+
         let inputNode = audioEngine.inputNode
         let format = inputNode.outputFormat(forBus: 0)
         // A zero sample rate means no usable input device (no mic, or it was
@@ -241,15 +243,13 @@ final class DictationService: NSObject, ObservableObject {
         state = .listening
     }
 
-    /// Moves the live transcript into the committed buffer and updates textAtStart.
+    /// Moves the live transcript into the committed buffer without mutating textAtStart.
     private func commitCurrentUtterance() {
         let spoken = partialTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
         if !spoken.isEmpty {
             committedTranscript = committedTranscript.isEmpty
                 ? spoken
                 : committedTranscript + " " + spoken
-            textAtStart = composedText
-            committedTranscript = ""
             partialTranscript = ""
         }
     }
@@ -317,15 +317,29 @@ final class DictationService: NSObject, ObservableObject {
     ///
     /// Three parts joined with single spaces, skipping empties so dictating into
     /// an empty box produces no leading whitespace: what the user had typed, the
-    /// utterances already finalised, and the one currently being spoken.
+    /// Original composer text plus everything dictated so far.
+    ///
+    /// Prevents sentence duplication if the user repeats what was already in the draft box.
     private var composedText: String {
-        [
-            textAtStart.trimmingCharacters(in: .whitespacesAndNewlines),
-            committedTranscript.trimmingCharacters(in: .whitespacesAndNewlines),
-            partialTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
-        ]
-        .filter { !$0.isEmpty }
-        .joined(separator: " ")
+        let start = textAtStart.trimmingCharacters(in: .whitespacesAndNewlines)
+        let committed = committedTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let partial = partialTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let liveDictation = [committed, partial].filter { !$0.isEmpty }.joined(separator: " ")
+        if start.isEmpty {
+            return liveDictation
+        }
+        if liveDictation.isEmpty {
+            return start
+        }
+        // If the live dictation repeats or matches start text, do not duplicate
+        if start == liveDictation || start.hasSuffix(liveDictation) {
+            return start
+        }
+        if liveDictation.hasPrefix(start) {
+            return liveDictation
+        }
+        return start + " " + liveDictation
     }
 
     /// Stops listening and keeps whatever was transcribed.
@@ -383,5 +397,27 @@ final class DictationService: NSObject, ObservableObject {
     private var isFailed: Bool {
         if case .unavailable = state { return true }
         return false
+    }
+
+    private var configChangeObserver: NSObjectProtocol?
+
+    private func setupAudioEngineObservers() {
+        if configChangeObserver == nil {
+            configChangeObserver = NotificationCenter.default.addObserver(
+                forName: .AVAudioEngineConfigurationChange,
+                object: audioEngine,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleAudioRouteDisconnect()
+                }
+            }
+        }
+    }
+
+    private func handleAudioRouteDisconnect() {
+        guard state == .listening else { return }
+        stop()
+        state = .unavailable("Microphone configuration changed or disconnected.")
     }
 }

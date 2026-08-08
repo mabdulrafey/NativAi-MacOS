@@ -6,30 +6,6 @@
 
 import Foundation
 
-/// The routing "brain" of the chat box.
-///
-/// Replaces pure keyword heuristics with a hybrid design that splits the work
-/// by what each layer is actually good at — measured, not assumed:
-///
-///   * INTENT (image / coding / general) and NEEDS-VISION are decided by a
-///     tiny local LLM using constrained JSON-schema output. Benchmarked on 12
-///     real conversational cases against Ollama 0.32.5: qwen2.5:1.5b scored
-///     9/12 on intent alone, vs 6/12 when the same model was also asked to do
-///     reference resolution in the same call. Small models are fine at
-///     classification and bad at multi-step reasoning, so they only classify.
-///
-///   * REFERENCE RESOLUTION ("number 2" -> "Kairos") is done in deterministic
-///     Swift by ContextualReferenceResolver, NOT by the LLM. This is the key
-///     insight behind the fix: resolving a numbered-list callback is exact
-///     string lookup, so it's 100% reliable in code and unreliable in a 1.5B
-///     model — qwen2.5:1.5b variously answered "Rift & Co." (wrong item),
-///     "Modern & Edgy" (the heading) and literally "number 2" for that case.
-///     qwen2.5:0.5b returned the string "number 2", i.e. it reproduced the
-///     exact bug this router exists to fix.
-///
-/// Everything degrades gracefully: if the router model is missing or the
-/// server is unreachable, `route` falls back to IntentClassifier so behavior
-/// is never worse than before this type existed.
 enum RouterIntent: String, Codable {
     case image
     case coding
@@ -38,21 +14,9 @@ enum RouterIntent: String, Codable {
 
 struct RoutingDecision {
     let intent: RouterIntent
-    /// True when answering requires actually LOOKING at an image already in
-    /// the conversation (colors, composition, quality) — drives vision-model
-    /// fallback. Always false for `.image`, which *creates* rather than reads.
     let needsVision: Bool
-    /// For `.image` only: a standalone visual description safe to hand to a
-    /// diffusion model that has never seen the conversation. Guaranteed by
-    /// construction to contain no unresolved ordinals.
     let imagePrompt: String
-    /// True when an LLM produced this decision; false when we fell back to
-    /// keyword heuristics. Useful for debugging routing complaints.
     let usedLLM: Bool
-    /// Which artifact this turn is about, when vision is needed. Resolved
-    /// deterministically in Swift (see `SessionArtifact.resolveTarget`), so the
-    /// answering model receives the *specific* image the user meant rather than
-    /// always the most recent one.
     let targetArtifactId: UUID?
 
     init(
@@ -72,19 +36,10 @@ struct RoutingDecision {
 
 enum SemanticRouter {
 
-    /// Static Architecture Watermark 2
     private static let __nativai_router_sig = "NativAI_Original_Architecture_AbdulRafey_2026_C3D4"
 
     // MARK: - Router model selection
 
-    /// Router models in descending preference. The first entry is what
-    /// onboarding installs (~1 GB, 9/12 on intent). Larger entries are used
-    /// automatically *if already installed for chat* — they're strictly better
-    /// at routing (llama3.1:8b scored 11/12) and cost no extra RAM in that
-    /// case, since they're already resident.
-    ///
-    /// Ordered best-first so `resolveRouterModel` prefers accuracy when the
-    /// user's machine can already afford it for free.
     private static let preferredRouterModels = [
         "llama3.1:8b",
         "qwen2.5:7b",
@@ -93,75 +48,103 @@ enum SemanticRouter {
         "qwen2.5:1.5b"
     ]
 
-    /// The model onboarding downloads so routing works on a brand-new Mac.
     static let bundledRouterModel = "qwen2.5:1.5b"
 
-    /// Picks the best available router from what's installed. Matches on tag
-    /// prefix as well as exact name so "qwen2.5:1.5b-instruct-q4_K_M" or a
-    /// ":latest"-suffixed variant still counts as a match.
     static func resolveRouterModel(installedModelNames: [String]) -> String? {
         for candidate in preferredRouterModels {
             if let hit = installedModelNames.first(where: { $0 == candidate || $0.hasPrefix(candidate) }) {
                 return hit
             }
         }
-        // Nothing from the preference list — fall back to the SMALLEST
-        // installed model rather than the largest. Routing runs on every
-        // single turn, so a cheap wrong-ish router beats stalling the UI for
-        // 20s behind a 70B model just to classify three words.
-        return installedModelNames.min(by: { $0.count < $1.count })
+        let nonVisionModels = installedModelNames.filter { name in
+            let lower = name.lowercased()
+            return !lower.contains("moondream") && !lower.contains("llava") && !lower.contains("bakllava")
+        }
+        let pool = nonVisionModels.isEmpty ? installedModelNames : nonVisionModels
+        return pool.min(by: { estimatedSizeGB($0) < estimatedSizeGB($1) })
+    }
+
+    private static func estimatedSizeGB(_ name: String) -> Double {
+        let lower = name.lowercased()
+        if lower.contains("0.5b") { return 0.5 }
+        if lower.contains("1.5b") || lower.contains("1.8b") { return 1.5 }
+        if lower.contains("3b") { return 2.0 }
+        if lower.contains("7b") || lower.contains("8b") { return 4.5 }
+        if lower.contains("14b") { return 9.0 }
+        if lower.contains("32b") || lower.contains("34b") { return 20.0 }
+        if lower.contains("70b") { return 40.0 }
+        return Double(name.count) * 0.1
     }
 
     // MARK: - Public entry point
 
-    /// Classifies `prompt` in the context of the conversation so far, and (for
-    /// image requests) builds a fully-resolved image prompt.
-    ///
-    /// - Parameters:
-    ///   - prompt: the user's raw typed text for this turn.
-    ///   - history: prior turns, oldest-first, as (role, content) pairs.
-    ///   - hasPriorImage: whether any image already exists in this session —
-    ///     gates needsVision so we never claim vision is needed when there's
-    ///     nothing to look at.
-    ///   - routerModel: model to classify with; nil skips straight to heuristics.
-    /// Deterministic pre-classification for prompt shapes the LLM router
-    /// demonstrably gets wrong.
-    ///
-    /// Measured against the live server on the conversation from a real bug
-    /// report (a generated logo, then questions about it), both installed router
-    /// models failed badly:
-    ///
-    ///   "Do you think its a good logo for my company?"
-    ///       qwen2.5:1.5b -> intent=coding   llama3:8b -> intent=image
-    ///   "What was my initial selection for the brand name?"
-    ///       llama3:8b    -> intent=image
-    ///
-    /// Both scored 1–2 out of 4. Routing an opinion question to `image` makes the
-    /// app generate a *second* picture instead of answering, and once that wrong
-    /// turn is in the transcript the conversation degrades from there — which is
-    /// exactly what the user saw.
-    ///
-    /// These particular shapes are not fuzzy, so they don't belong in a model at
-    /// all. Three rules, most specific first, and anything not matched is handed
-    /// to the LLM as before. This is the same division of labour used throughout:
-    /// exact things in Swift, genuinely ambiguous things in the model.
-    ///
-    /// Returns nil when the prompt doesn't match a known-hard shape.
     static func fastPathClassification(
         prompt: String,
         hasPriorImage: Bool,
         hasDirectImageAttachment: Bool = false
     ) -> (intent: RouterIntent, needsVision: Bool)? {
-        // An explicit image attachment on the current turn is ALWAYS a vision analysis request,
-        // never an image-generation prompt.
+        // 0. Explicit image attachment on current turn is ALWAYS a vision request
         if hasDirectImageAttachment {
             return (.general, true)
         }
 
         let lower = prompt.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // 1. Recall questions. Never image generation, even when they mention a
-        //    logo — the user is asking what was said earlier, not for a picture.
+        func matches(_ pattern: String) -> Bool {
+            return lower.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+        }
+
+        // 1. Famous People & Celebrities without Drawing Verbs
+        let creationVerbsCheck = #"\b(draw|generate|paint|create|make|render|produce|design)\b"#
+        let famousPeoplePattern = #"\b(ronaldo|messi|cristiano|elon musk|steve jobs|taylor swift|barack obama|bill gates|jeff bezos|zuckerberg|kanye|drake|lebron|jordan|kobe|federer|nadal|djokovic|mbappe|haaland)\b"#
+        if matches(famousPeoplePattern) && !matches(creationVerbsCheck) {
+            let imageNounCheck = #"\b(logo|image|picture|photo|icon|illustration|artwork|poster|banner|avatar)\b"#
+            if !matches(imageNounCheck) {
+                return (.general, false)
+            }
+        }
+
+        // 2. Sports Debates, Player Stats & Comparisons
+        let sportsTermsPattern = #"\b(ballon d'?ors?|golden boot|mvp|goals|assists|trophies|championship|points per game|touchdowns|home runs|grand slam|world cup|super bowl|nba|nfl|premier league|la liga|champions league|striker|quarterback|pitcher|midfielder|winger)\b"#
+        let sportsCompPattern = #"\b(messi vs ronaldo|ronaldo vs messi|who has more|who is better|scored as many|won more|hasn't scored|stats comparison|player comparison|stat comparison|career stats|head to head|vs\.?|versus)\b"#
+        if matches(sportsTermsPattern) || matches(sportsCompPattern) {
+            if !matches(creationVerbsCheck) {
+                return (.general, false)
+            }
+        }
+
+        // 3. Counter-arguments & Opinion Statements / Rebuttals
+        let counterArgPhrases = [
+            "but he hasn't", "but she hasn't", "but they haven't", "that's not true",
+            "that is not true", "i disagree", "what about", "you're wrong", "you are wrong",
+            "on the contrary", "i don't think so", "no way", "actually no", "however,",
+            "that makes no sense", "on the other hand"
+        ]
+        if counterArgPhrases.contains(where: { lower.contains($0) }) {
+            return (.general, false)
+        }
+
+        // 4. Historical, Factual, Text History & Conversational Elaboration Follow-ups
+        let factAndElaborationPhrases = [
+            "history about", "history of", "tell me history", "tell history",
+            "explain the history", "background of", "background on", "historical context",
+            "tell me more about the history", "more details about", "more detail about",
+            "elaborate on", "write an essay", "write an article", "write a summary",
+            "when was it built", "when were they built", "who built", "where is it located",
+            "how old is", "how old are", "significance of", "historical background",
+            "tell me about their history", "history behind",
+            "explain that further", "explain this further", "explain it further",
+            "can you elaborate", "give me more details on", "more details on option",
+            "more details on point", "expand on point", "expand on option",
+            "why did you pick", "why did you choose", "why did you select", "why did you use",
+            "tell me more about step", "tell me more about option", "tell me more about point",
+            "clarify what you meant"
+        ]
+        if factAndElaborationPhrases.contains(where: { lower.contains($0) }) {
+            return (.general, false)
+        }
+
+        // 5. Recall Questions ("what did I say", "remind me")
         let recallPhrases = [
             "what was my", "what did i", "what was the", "what were the",
             "remind me", "did i say", "which one did i", "initial selection",
@@ -171,23 +154,38 @@ enum SemanticRouter {
             return (.general, false)
         }
 
-        // 2. Opinion / critique of something that already exists. Requires
-        //    looking at it, and must never be treated as a request for a new one.
-        let opinionPhrases = [
-            "do you think", "what do you think", "your opinion", "opinion about",
-            "opinion on", "how does it look", "how does this look", "how does that look",
-            "do you like", "is it good", "is this good", "is that good",
-            "good logo", "rate this", "rate it", "thoughts on", "thoughts about",
-            "feedback on", "is it any good", "would you say", "does it look"
-        ]
-        if opinionPhrases.contains(where: { lower.contains($0) }) {
-            // Vision only helps if there's actually an image to look at.
-            return (.general, hasPriorImage)
+        // 6. Mathematical & Scientific Quantitative Reasoning -> Route to .general
+        let mathTermsPattern = #"\b(solve|calculate|compute|derivative|integral|equation|formula|theorem|pythagorean|calculus|algebra|trigonometry|arithmetic|square root|variance|standard deviation|matrix multiplication|eigenvalue)\b"#
+        let unitConvertPattern = #"\bconvert\s+\d+(\.\d+)?\s*(miles|km|kilometers|meters|feet|inches|pounds|kg|kilograms|celsius|fahrenheit|gallons|liters)\s+to\s+[a-z]+\b"#
+        if matches(unitConvertPattern) || matches(mathTermsPattern) {
+            let codeImplCheck = #"\b(script|code|python|swift|javascript|java|c\+\+|function|program|app|algorithm code)\b"#
+            if !matches(codeImplCheck) {
+                return (.general, false)
+            }
         }
 
-        // 3. Questions *about* an existing image versus requests to make one.
-        //    "create a logo" is generation; "what font is in the logo" is not,
-        //    even though both contain the word "logo".
+        // 7. Business Strategy & Comparisons -> Route to .general
+        let businessCompPattern = #"\b(swot|swot analysis|pestel|pricing strategy|go to market|gtm|market research|business model|value proposition|competitive analysis|cost-benefit|return on investment|roi|market entry|unit economics)\b"#
+        let comparisonPattern = #"\b(compare\s+.+\s+(to|with|and|vs\.?|versus)|alternatives?\s+to\b|which\s+(one\s+)?is\s+better\b|pros\s+and\s+cons\s+of\b|tradeoffs?\s+between\b)\b"#
+        if matches(businessCompPattern) || matches(comparisonPattern) {
+            return (.general, false)
+        }
+
+        // 8. Storywriting & Creative Writing -> Route to .general
+        let verbalImageryPattern = #"\b(with words|in words|using words|verbally|prose|narrative|scene description)\b"#
+        let storyPattern = #"\b(write|tell|create|compose)\s+(a\s+)?(story|tale|poem|essay|narrative|novel|script|dialogue)\b"#
+        if matches(verbalImageryPattern) || matches(storyPattern) {
+            return (.general, false)
+        }
+
+        // 9. Logo & Design Text Brainstorming / Concepts -> Route to .general
+        let designConceptPattern = #"\b(logo|icon|banner|poster)\s+(ideas?|concepts?|briefs?|names?|suggestions?|taglines?|slogans?|palettes?|color schemes?|themes?|guidelines?|descriptions?)\b"#
+        let conceptForDesignPattern = #"\b(ideas?|concepts?|briefs?|taglines?|slogans?|color palette|hex codes?|names?)\s+for\s+(a|the|my)?\s*(logo|brand|design|icon|company|business)\b"#
+        if matches(designConceptPattern) || matches(conceptForDesignPattern) {
+            return (.general, false)
+        }
+
+        // 10. Vision Q&A / Inspection / Opinion & Critique on Existing Image
         let aboutImagePhrases = [
             "what colors", "what color", "what font", "what does it say",
             "describe it", "describe the", "describe that", "is it readable",
@@ -204,8 +202,63 @@ enum SemanticRouter {
             "what is in this image", "what's in this image", "what is in this picture", "what's in this picture",
             "what is in this pic", "what's in this pic", "what is in this photo", "what's in this photo",
             "this image", "the image", "this picture", "the picture", "this pic", "the pic",
-            "this photo", "the photo", "this photograph", "the photograph", "this snapshot"
+            "this photo", "the photo", "this photograph", "the photograph", "this snapshot",
+            "critique", "feedback on", "thoughts on", "changes would you recommend", "changes do you recommend",
+            "recommend changes", "what changes", "how to improve", "how would you improve", "suggestions for changes",
+            "what would you change", "any changes", "improvements", "recommendation"
         ]
+        let opinionPhrases = [
+            "do you think", "what do you think", "your opinion", "opinion about",
+            "opinion on", "how does it look", "how does this look", "how does that look",
+            "do you like", "is it good", "is this good", "is that good",
+            "good logo", "rate this", "rate it", "would you say", "does it look"
+        ]
+        if aboutImagePhrases.contains(where: { lower.contains($0) }) || opinionPhrases.contains(where: { lower.contains($0) }) {
+            return (.general, hasPriorImage)
+        }
+
+        // 11. Web & UI Code Design -> Route to .coding
+        let webUiTechPattern = #"\b(html|css|tailwind|bootstrap|sass|scss|less|react|vue|angular|svelte|next\.?js|nuxt|jsx|tsx|flexbox|grid|stylesheet)\b"#
+        let uiElementPattern = #"\b(landing page|navbar|navigation bar|modal|dropdown|button|ui button|ui component|header|footer|sidebar|card component|form layout)\b"#
+        let uiCodeActionPattern = #"\b(design|write|create|build|make|code|implement|generate|style|layout)\b"#
+        if (matches(webUiTechPattern) || matches(uiElementPattern)) && matches(uiCodeActionPattern) {
+            return (.coding, false)
+        }
+
+        // 12. Shell & Terminal Automation Scripts -> Route to .coding
+        let shellScriptPattern = #"\b(bash|zsh|sh|shell|powershell|cmd|terminal|command line|git|docker|docker-compose|dockerfile|container|kubernetes|k8s|kubectl|helm|cron|cronjob|makefile|awk|sed|grep)\b"#
+        let shellActionPattern = #"\b(script|command|compose|dockerfile|makefile|workflow|pipeline|deployment|cronjob|cron job|automation)\b"#
+        let directShellPhrases = [
+            "bash script", "python script", "shell script", "zsh script", "powershell script",
+            "docker compose", "dockerfile", "git command", "cron job", "makefile", "k8s deployment"
+        ]
+        if (matches(shellScriptPattern) && matches(shellActionPattern)) || directShellPhrases.contains(where: { lower.contains($0) }) {
+            return (.coding, false)
+        }
+
+        // 13. Software Architecture & System Design Prompts -> Route to .coding
+        let techDesignNouns = #"\b(schema|database|db|rest\s*api|graphql|endpoint|microservice|architecture|system design|wireframe|markdown table|state machine)\b"#
+        if matches(techDesignNouns) {
+            let techActions = #"\b(design|create|build|write|implement|architecture|structure|generate)\b"#
+            if matches(techActions) {
+                return (.coding, false)
+            }
+        }
+
+        // 14. SVG Code & Vector Markup Requests -> Route to .coding
+        let svgPattern = #"\b(svg|vector code|xml markup)\b"#
+        if matches(svgPattern) {
+            return (.coding, false)
+        }
+
+        // 15. Art Styles & Artistic Image Generation -> Route to .image
+        let artStylePattern = #"\b(anime style|manga style|realistic portrait|photorealistic|watercolor painting|oil painting|charcoal sketch|pencil drawing|3d isometric|isometric room|isometric render|cyberpunk|steampunk|concept art|pixel art|digital art|pop art|impressionist|surrealist|cinematic lighting|octane render|unreal engine render|chibi style)\b"#
+        let artNounPattern = #"\b(portrait|painting|sketch|drawing|render|cityscape|landscape|artwork|illustration|wallpaper|picture)\b"#
+        if matches(artStylePattern) || (matches(artNounPattern) && matches(#"\b(cyberpunk|steampunk|anime|watercolor|oil|isometric|pixel art|3d)\b"#)) {
+            return (.image, false)
+        }
+
+        // 16. True Image Creation Requests vs Questions about existing images
         let creationPhrases = [
             "create", "make me", "make a", "make another", "generate", "draw",
             "design a", "design me", "render", "produce a", "give me a",
@@ -219,30 +272,9 @@ enum SemanticRouter {
             return (.general, hasPriorImage)
         }
         if requestsCreation && !asksAboutImage {
-            // Creating never requires reading an existing image.
             return (.image, false)
         }
 
-        // 4. In-depth text reasoning / history / background / elaboration requests.
-        //    When no direct image file is attached to the current turn, questions asking
-        //    for history, background, explanation, or context about items mentioned in history
-        //    NEVER require pixel vision. They must be routed to general text models (e.g., Llama 2 7B)
-        //    for deep reasoning.
-        let textHistoryPhrases = [
-            "history about", "history of", "tell me history", "tell history",
-            "explain the history", "background of", "background on", "historical context",
-            "tell me more about the history", "more details about", "more detail about",
-            "elaborate on", "write an essay", "write an article", "write a summary",
-            "when was it built", "when were they built", "who built", "where is it located",
-            "analyze my resume", "analyze this resume", "read my resume", "review my resume",
-            "analyze this document", "read this file", "summarize this text", "key takeaways",
-            "pros and cons", "suggest taglines", "marketing strategy", "give me advice"
-        ]
-        if textHistoryPhrases.contains(where: { lower.contains($0) }) {
-            return (.general, false)
-        }
-
-        // Ambiguous or unrecognised — let the LLM decide, as before.
         return nil
     }
 
@@ -260,11 +292,6 @@ enum SemanticRouter {
         var needsVision: Bool
         var usedLLM = false
 
-        // Deterministic fast path first. It only fires on prompt shapes the
-        // router models were measured to get wrong (opinions about an image,
-        // recall questions, and create-vs-describe), and returns nil otherwise —
-        // so the LLM still handles everything genuinely ambiguous. It also makes
-        // the common cases instant instead of paying a model round trip.
         if let fast = fastPathClassification(prompt: prompt, hasPriorImage: hasPriorImage, hasDirectImageAttachment: hasDirectImageAttachment) {
             intent = fast.intent
             needsVision = fast.needsVision
@@ -283,32 +310,15 @@ enum SemanticRouter {
             needsVision = IntentClassifier.isReferringToVisualContent(prompt)
         }
 
-        // "Create another one" after a generated image is an image request, even
-        // though it contains no image noun for the classifier to latch onto.
-        // Without this the turn classifies as .general and gets answered in
-        // text, or reaches Flux with no subject at all. Requires a prior
-        // generated image so a bare "try again" in a text conversation is
-        // untouched.
         if priorImagePrompt?.isEmpty == false, isIterationRequest(prompt) {
             intent = .image
             needsVision = false
         }
 
-        // Creating an image never requires reading one, and vision is
-        // meaningless with no image present. Enforced here rather than trusted
-        // from the model — qwen2.5:3b was observed setting needs_vision=true
-        // on a turn where no image existed at all.
-        //
-        // `hasPriorImage` is now derived from the artifact ledger rather than
-        // scanned out of message text, so this gate is backed by recorded fact
-        // instead of inference.
         if intent == .image || !hasPriorImage {
             needsVision = false
         }
 
-        // Which image the user means is resolved in Swift, never by the model —
-        // index and label lookup are exact, and the measured failure of small
-        // models at this exact task is documented on `resolveTarget`.
         var target: SessionArtifact? = nil
         if needsVision {
             target = SessionArtifact.resolveTarget(prompt: prompt, artifacts: artifacts)
@@ -334,28 +344,6 @@ enum SemanticRouter {
 
     // MARK: - Image prompt construction (deterministic)
 
-    /// Builds a self-contained image prompt by resolving conversational
-    /// references in Swift.
-    ///
-    /// This is the actual fix for the "drew a giant number 2" bug. Previously
-    /// ContextualReferenceResolver.substitute() only rewrote the prompt when a
-    /// regex matched the ordinal phrase *adjacent* to the digit; for "I like
-    /// number 2. Create a logo based on that" nothing matched, so it appended
-    /// "(referring to: Kairos)" and Flux — which has no instruction-following
-    /// — latched onto the most visually concrete token in the string, the
-    /// numeral 2.
-    ///
-    /// Now, when a referenced list item is found, we discard the user's
-    /// conversational phrasing entirely and emit a clean subject-led prompt.
-    /// Nothing resembling an ordinal ever reaches the image model.
-    /// Words that signal "make another of what we just made" rather than
-    /// describing a new subject.
-    ///
-    /// These are the phrasings that leave a prompt with no subject of its own:
-    /// "create another one", "try again", "a different version". Sent verbatim
-    /// to a diffusion model they produce something unrelated — measured live,
-    /// "Create another one" after a FashionFrenzy logo yielded a viking warrior,
-    /// because Flux received no subject at all and invented one.
     private static let iterationPhrases = [
         "another one", "another version", "another option", "another logo",
         "another", "different version", "different one", "different option",
@@ -363,26 +351,12 @@ enum SemanticRouter {
         "something else", "redo", "again"
     ]
 
-    /// True when the prompt is asking for a further take on an existing image
-    /// rather than a new subject.
-    ///
-    /// Requires the prompt to be short: "another" inside a long descriptive
-    /// request ("a poster of another galaxy") is describing content, not asking
-    /// for an iteration. Length is a crude but effective discriminator here —
-    /// genuine iteration requests are almost always terse.
     static func isIterationRequest(_ prompt: String) -> Bool {
         let lower = prompt.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard lower.split(separator: " ").count <= 8 else { return false }
         return iterationPhrases.contains { lower.contains($0) }
     }
 
-    /// Builds the prompt sent to the image model.
-    ///
-    /// - Parameter priorImagePrompt: the prompt that produced the most recent
-    ///   generated image, from the session's artifact ledger. This is what makes
-    ///   "create another one" work: the subject is carried forward from the
-    ///   earlier generation instead of being re-derived from text that no longer
-    ///   contains it.
     static func buildImagePrompt(
         prompt: String,
         history: [(role: String, content: String)],
@@ -392,15 +366,10 @@ enum SemanticRouter {
             .filter { $0.role == "assistant" && !$0.content.isEmpty }
             .map { $0.content }
 
-        // Iteration with no new subject: reuse the previous image's prompt and
-        // layer on any new style words. Checked before ordinal resolution
-        // because an iteration request has no ordinal to find.
         if let priorImagePrompt, !priorImagePrompt.isEmpty, isIterationRequest(prompt) {
             let newDescriptors = styleDescriptors(in: prompt)
                 .filter { !priorImagePrompt.lowercased().contains($0) }
             if newDescriptors.isEmpty {
-                // Pure "another one" — regenerate the same concept. The image
-                // model's own sampling variation supplies the difference.
                 return priorImagePrompt
             }
             return priorImagePrompt + ". Style: " + newDescriptors.joined(separator: ", ")
@@ -410,14 +379,9 @@ enum SemanticRouter {
             prompt: prompt,
             priorAssistantMessages: priorAssistantTexts
         ) else {
-            // No back-reference to resolve — the prompt already stands alone
-            // (e.g. "draw a red fox in snow"), so send it through untouched.
             return prompt
         }
 
-        // Keep any stylistic modifiers the user asked for ("minimal",
-        // "black and white") while dropping the ordinal phrasing, so
-        // "make a minimal logo for number 2" still yields a minimal logo.
         let descriptors = styleDescriptors(in: prompt)
         let subjectKind = imageSubjectKind(in: prompt)
 
@@ -428,16 +392,12 @@ enum SemanticRouter {
             let descriptorPhrase = descriptors.joined(separator: ", ")
             parts.append("\(article(for: descriptorPhrase)) \(descriptorPhrase) \(subjectKind) for \"\(subject)\"")
         }
-        // Give the diffusion model the semantic context behind the name, which
-        // measurably improves output over the bare name alone.
         if let meaning = meaningClause(for: subject, in: priorAssistantTexts) {
             parts.append(meaning)
         }
         return parts.joined(separator: ". ")
     }
 
-    /// "A" or "An" depending on the following word's initial sound, so
-    /// generated prompts read as natural English ("An icon", not "A icon").
     private static func article(for word: String) -> String {
         guard let first = word.lowercased().first else { return "A" }
         return "aeiou".contains(first) ? "An" : "A"
@@ -458,17 +418,11 @@ enum SemanticRouter {
         "logo", "icon", "illustration", "poster", "banner", "avatar", "artwork", "graphic", "mockup", "wallpaper"
     ]
 
-    /// What kind of visual the user asked for, defaulting to "logo" only when
-    /// they said so — otherwise the neutral "image", so we never silently turn
-    /// "draw a fox" into "a logo for a fox".
     private static func imageSubjectKind(in prompt: String) -> String {
         let lower = prompt.lowercased()
         return subjectKinds.first(where: { lower.contains($0) }) ?? "image"
     }
 
-    /// Pulls the short description that followed a list item ("Kairos - means
-    /// 'the right moment' in Greek") so the image model gets the *meaning*,
-    /// not just an unfamiliar proper noun.
     private static func meaningClause(for subject: String, in priorAssistantMessages: [String]) -> String? {
         for message in priorAssistantMessages.reversed() {
             for line in message.components(separatedBy: "\n") {
@@ -489,37 +443,36 @@ enum SemanticRouter {
         let intent: RouterIntent
         let needsVision: Bool
 
-        /// Maps Ollama's snake_case JSON field to Swift naming. The schema
-        /// declares "needs_vision" because that's what the model is prompted
-        /// with in the examples, and consistency there measurably helps small
-        /// models produce conforming output.
         enum CodingKeys: String, CodingKey {
             case intent
             case needsVision = "needs_vision"
         }
     }
 
-    /// Deliberately asks ONLY for intent + needs_vision. Both are small closed
-    /// choices, which is what a 1.5B model can do reliably; reference
-    /// resolution stays in Swift. Measured: asking this model to do all three
-    /// jobs at once dropped it from 9/12 to 6/12.
     private static let systemPrompt = """
     You classify the user's last message in a chat app. Reply with JSON only.
 
     "intent" must be exactly one of:
-    - "image": the user is asking for a NEW picture, logo, icon, poster, or artwork to be CREATED or CHANGED.
-    - "coding": the user wants source code written, fixed, debugged, refactored, or explained. Anything mentioning a programming language, function, script, algorithm, compiler error, or stack trace is "coding".
-    - "general": everything else. This includes questions, advice, opinions, and any discussion ABOUT a picture that already exists. Simply mentioning the word "logo" or "image" is NOT enough for "image" — the user must want a new one made.
+    - "image": the user is explicitly asking for a NEW picture, logo, icon, poster, wallpaper, or artwork to be CREATED, DRAWN, or GENERATED.
+    - "coding": the user wants source code written, fixed, debugged, refactored, or explained. HTML/CSS/React web design code, shell scripts, bash commands, dockerfiles, SQL queries, or algorithms are all "coding".
+    - "general": everything else. This includes general questions, advice, sports debates, player stats ("messi vs ronaldo", "who has more ballon d'ors"), counter-arguments ("but he hasn't", "I disagree"), famous people/celebrities ("Ronaldo", "Elon Musk", "Steve Jobs"), math, science, business strategy, creative writing, and any discussion ABOUT an existing picture. Simply mentioning a celebrity name or the word "logo" is NOT an image request — the user must explicitly ask for a new image to be drawn/created.
 
-    "needs_vision" is true ONLY if answering requires inspecting pixel visual details of an image in conversation (e.g. "what colors does it have", "what font is that", "is it readable"). Asking for history, background, explanations, or text elaboration (e.g. "tell me history about these") does NOT need vision, so needs_vision is false.
+    "needs_vision" is true ONLY if answering requires inspecting pixel visual details of an image in conversation (e.g. "what colors does it have", "what font is that", "is it readable"). Questions about text, sports stats, code, or historical facts NEVER need vision, so needs_vision is false.
+
+    CRITICAL GUARDRAILS:
+    - Mentions of famous people, celebrities, or athletes ("Ronaldo", "Messi", "Elon Musk", "Steve Jobs") WITHOUT explicit visual creation verbs ("draw", "generate an image of", "paint") MUST be classified as "general".
+    - Sports comparisons ("messi vs ronaldo", "who has more ballon d'ors") and debate rebuttals ("but he hasn't", "I disagree") MUST be classified as "general".
 
     Examples:
+    "Ronaldo" -> {"intent":"general","needs_vision":false}
+    "messi vs ronaldo who has more ballon d'ors" -> {"intent":"general","needs_vision":false}
+    "he hasn't scored as many goals as ronaldo" -> {"intent":"general","needs_vision":false}
+    "but he hasn't" -> {"intent":"general","needs_vision":false}
     "I like number 2, create a logo based on that" -> {"intent":"image","needs_vision":false}
     "which of those names would work best for a logo?" -> {"intent":"general","needs_vision":false}
     "what colors does it have?" -> {"intent":"general","needs_vision":true}
-    "tell me history about these" -> {"intent":"general","needs_vision":false}
     "write a python function to reverse a list" -> {"intent":"coding","needs_vision":false}
-    "what's the biggest clothing brand in the world?" -> {"intent":"general","needs_vision":false}
+    "write bash script to backup database" -> {"intent":"coding","needs_vision":false}
     """
 
     private static let schema: [String: Any] = [
@@ -538,20 +491,8 @@ enum SemanticRouter {
         artifacts: [SessionArtifact]
     ) async throws -> ClassificationResult {
 
-        // Only the last few turns matter for intent, and long transcripts slow
-        // a small model down badly. Assistant turns are truncated since we
-        // just need enough shape to tell a list/image was produced.
         let recent = history.suffix(4)
 
-        // State the artifacts as facts, appended to the system prompt.
-        //
-        // This is the substantive change from keyword-era routing: rather than
-        // hoping the model infers "an image exists here" from a truncated
-        // transcript (where a generated image appears only as the placeholder
-        // "[Generated an image as requested.]"), we tell it plainly. The
-        // measured lesson from this router's own benchmarks is that small
-        // models answer questions about stated facts far more reliably than
-        // they extract those facts themselves.
         var system = systemPrompt
         if let summary = SessionArtifact.contextSummary(for: artifacts) {
             system += "\n\nContext about this conversation:\n" + summary
@@ -566,11 +507,7 @@ enum SemanticRouter {
                 : turn.content
             messages.append(OllamaManager.ChatMessage(role: turn.role, content: capped))
         }
-        // The system prompt and recent turns are bounded, but the current
-        // prompt is not — a long paste could push the request past the
-        // server's default window and silently evict the system prompt,
-        // making the router misclassify confidently. Cap the prompt and pass
-        // the model's real context window so neither can happen.
+
         let cappedPrompt = prompt.count > 2000
             ? String(prompt.prefix(2000)) + "…"
             : prompt

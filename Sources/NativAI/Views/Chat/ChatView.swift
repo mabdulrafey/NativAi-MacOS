@@ -48,6 +48,7 @@ private struct ChatContentView: View {
     /// state with no meaning outside this screen, and tying its lifetime to the
     /// view guarantees the audio engine is torn down when the chat closes.
     @StateObject private var dictation = DictationService()
+    @State private var draftText: String = ""
     @State private var pendingAttachments: [MessageAttachment] = []
     @State private var attachmentError: String?
     @State private var inputHeight: CGFloat = 20
@@ -70,15 +71,46 @@ private struct ChatContentView: View {
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("NativAISystemNewChat"))) { _ in
+            viewModel.startNewSession(modelName: appState.selectedModelName ?? ChatViewModel.autoRouteSentinel)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("NativAISystemExportSession"))) { _ in
+            if let currentSession = viewModel.session(for: sessionId) {
+                SessionExportService.promptSaveSession(currentSession, format: .markdown, window: NSApp.keyWindow)
+            }
+        }
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Text(viewModel.session(for: sessionId)?.title ?? "New Chat")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
+
             Spacer()
+
+
+
+            // Session Export Menu
+            if let currentSession = viewModel.session(for: sessionId) {
+                Menu {
+                    Button("Export as Markdown (.md)") {
+                        SessionExportService.promptSaveSession(currentSession, format: .markdown, window: NSApp.keyWindow)
+                    }
+                    Button("Export as HTML (.html)") {
+                        SessionExportService.promptSaveSession(currentSession, format: .html, window: NSApp.keyWindow)
+                    }
+                    Button("Export as PDF (.pdf)") {
+                        SessionExportService.promptSaveSession(currentSession, format: .pdf, window: NSApp.keyWindow)
+                    }
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .menuStyle(.borderlessButton)
+            }
+
             modelPicker
         }
         .padding(.horizontal, 18)
@@ -99,12 +131,7 @@ private struct ChatContentView: View {
                 }
             }
         )) {
-            // Auto only makes sense with 2+ installed models to route between —
-            // with a single model there's nothing to choose, so it's hidden
-            // rather than shown as a confusing no-op option.
-            if appState.installedModels.count > 1 {
-                Text("✨ Auto").tag(ChatViewModel.autoRouteSentinel)
-            }
+            Text("✨ Auto").tag(ChatViewModel.autoRouteSentinel)
             ForEach(groupedModelNames(), id: \.self) { name in
                 Text(displayLabel(for: name)).tag(name)
             }
@@ -172,6 +199,13 @@ private struct ChatContentView: View {
             .onChange(of: messages.count) { _, _ in
                 if let last = messages.last {
                     withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo(last.id, anchor: .bottom)
+                    }
+                }
+            }
+            .onChange(of: messages.last?.content) { _, _ in
+                if viewModel.isStreaming, let last = messages.last {
+                    withAnimation(.easeOut(duration: 0.15)) {
                         proxy.scrollTo(last.id, anchor: .bottom)
                     }
                 }
@@ -261,10 +295,7 @@ private struct ChatContentView: View {
                     }
 
                     ChatInputTextView(
-                        text: Binding(
-                            get: { viewModel.draftText },
-                            set: { viewModel.draftText = $0 }
-                        ),
+                        text: $draftText,
                         measuredHeight: $inputHeight,
                         onSubmit: send
                     )
@@ -376,12 +407,16 @@ private struct ChatContentView: View {
             attachmentError = nil
             pendingAttachments.append(MessageAttachment(fileName: url.lastPathComponent, kind: .image, imageData: data))
         } else if let utType, utType.conforms(to: .pdf) {
-            guard let text = extractPDFText(from: url) else {
-                attachmentError = "Couldn't extract text from that PDF."
-                return
-            }
+            let text = extractPDFText(from: url) ?? ""
+            let pages = PDFVisualExtractor.extractPages(from: url, maxPages: 1)
+            let firstPageData = pages.first?.pngData
             attachmentError = nil
-            pendingAttachments.append(MessageAttachment(fileName: url.lastPathComponent, kind: .textFile, extractedText: text))
+            pendingAttachments.append(MessageAttachment(
+                fileName: url.lastPathComponent,
+                kind: .textFile,
+                imageData: firstPageData,
+                extractedText: text.isEmpty ? "PDF Document: \(url.lastPathComponent)" : text
+            ))
         } else if let text = try? String(contentsOf: url, encoding: .utf8) {
             attachmentError = nil
             pendingAttachments.append(MessageAttachment(fileName: url.lastPathComponent, kind: .textFile, extractedText: text))
@@ -408,7 +443,7 @@ private struct ChatContentView: View {
     private var canSend: Bool {
         !viewModel.isStreaming
             && appState.selectedModelName != nil
-            && (!viewModel.draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !pendingAttachments.isEmpty)
+            && (!draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !pendingAttachments.isEmpty)
     }
 
     private func toggleDictation() {
@@ -416,22 +451,21 @@ private struct ChatContentView: View {
             dictation.stop()
             return
         }
-        // The transcript is appended to whatever is already typed, so dictating
-        // after typing extends the draft instead of discarding it.
-        dictation.start(existingText: viewModel.draftText) { composed in
-            viewModel.draftText = composed
+        dictation.start(existingText: draftText) { composed in
+            draftText = composed
         }
     }
 
     private func send() {
-        // Stop dictation first so the final transcript is committed before the
-        // draft is read — otherwise a mid-utterance send would drop the last words.
         if dictation.isListening { dictation.stop() }
         guard let model = appState.selectedModelName else { return }
         let wasNewSession = (sessionId == nil)
         var realSizes: [String: Int64] = [:]
         for m in appState.installedModels { realSizes[m.name] = m.size }
+        let textToSend = draftText
+        draftText = ""
         let resultingSessionId = viewModel.send(
+            promptText: textToSend,
             using: model,
             targetSessionId: sessionId,
             installedModelNames: appState.installedModels.map { $0.name },

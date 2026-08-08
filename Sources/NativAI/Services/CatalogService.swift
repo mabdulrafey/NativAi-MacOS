@@ -12,7 +12,17 @@ final class CatalogService {
 
     static let shared = CatalogService()
 
-    private(set) var allModels: [ModelEntry] = []
+    private(set) var baseModels: [ModelEntry] = []
+
+    var allModels: [ModelEntry] {
+        var result = baseModels
+        for discovered in DynamicCatalogDiscoveryService.shared.discoveredModels {
+            if !result.contains(where: { $0.name == discovered.name }) {
+                result.append(discovered)
+            }
+        }
+        return result
+    }
 
     private init() {
         loadCatalog()
@@ -25,7 +35,7 @@ final class CatalogService {
         }
         do {
             let data = try Data(contentsOf: url)
-            allModels = try JSONDecoder().decode([ModelEntry].self, from: data)
+            baseModels = try JSONDecoder().decode([ModelEntry].self, from: data)
         } catch {
             print("⚠️ Failed to load catalog.json: \(error)")
         }

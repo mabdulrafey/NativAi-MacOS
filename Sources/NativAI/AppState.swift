@@ -211,6 +211,9 @@ final class AppState: ObservableObject {
     /// If Ollama is missing or no router model is present, triggers setup flow.
     private func performLaunchHealthCheck() async {
         deviceSpecs = SpecScanner.scan()
+        Task {
+            await DynamicCatalogDiscoveryService.shared.performDiscoveryCheck(specs: deviceSpecs)
+        }
 
         // If Ollama is not installed, force onboarding setup
         if !ollama.isInstalled() {
@@ -521,15 +524,15 @@ final class AppState: ObservableObject {
 
     func delete(modelName: String) {
         deleteErrors.removeValue(forKey: modelName)
+        installedModels.removeAll { $0.name == modelName }
         Task {
             do {
                 try await ollama.deleteModel(named: modelName)
-                // Drop cached capabilities so a later re-pull is re-probed
-                // rather than reusing stale data for different weights.
                 await CapabilityProbe.shared.invalidate(modelName: modelName)
                 await refreshInstalledModels()
             } catch {
                 deleteErrors[modelName] = error.localizedDescription
+                await refreshInstalledModels()
             }
         }
     }
@@ -539,7 +542,7 @@ final class AppState: ObservableObject {
     }
 
     func isInstalled(_ modelName: String) -> Bool {
-        installedModels.contains { installed in
+        return installedModels.contains { installed in
             installed.name == modelName ||
             installed.name == "\(modelName):latest" ||
             installed.name.hasPrefix("\(modelName):") ||

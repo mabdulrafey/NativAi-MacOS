@@ -80,5 +80,19 @@ struct NativAIApp: App {
                 .environmentObject(appState)
                 .frame(width: 520, height: 560)
         }
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("New Chat") {
+                    NotificationCenter.default.post(name: Notification.Name("NativAISystemNewChat"), object: nil)
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+            CommandGroup(after: .importExport) {
+                Button("Export Session...") {
+                    NotificationCenter.default.post(name: Notification.Name("NativAISystemExportSession"), object: nil)
+                }
+                .keyboardShortcut("e", modifiers: .command)
+            }
+        }
     }
 }

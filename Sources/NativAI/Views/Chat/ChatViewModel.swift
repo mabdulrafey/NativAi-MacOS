@@ -151,8 +151,8 @@ final class ChatViewModel: ObservableObject {
     /// LLM call happens inside a detached Task afterwards. The user message is
     /// appended before routing begins, so the UI shows it instantly even though
     /// the routing decision takes ~1-2s.
-    func send(using modelName: String, targetSessionId: UUID?, installedModelNames: [String] = [], realSizesBytes: [String: Int64] = [:], attachments: [MessageAttachment] = []) -> UUID? {
-        let rawText = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+    func send(promptText: String? = nil, using modelName: String, targetSessionId: UUID?, installedModelNames: [String] = [], realSizesBytes: [String: Int64] = [:], attachments: [MessageAttachment] = []) -> UUID? {
+        let rawText = (promptText ?? draftText).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !rawText.isEmpty || !attachments.isEmpty, !isStreaming else { return targetSessionId }
 
         var sessionId = targetSessionId
@@ -223,7 +223,8 @@ final class ChatViewModel: ObservableObject {
                     if let embeddingModel {
                         let chunks = DocumentRAGService.splitIntoChunks(text: fileText, fileName: attachment.fileName)
                         let indexedChunks = await DocumentRAGService.indexChunks(chunks, embeddingModel: embeddingModel)
-                        let topResults = await DocumentRAGService.retrieveTopChunks(query: rawText, chunks: indexedChunks, embeddingModel: embeddingModel, limit: 4)
+                        let expandedQuery = DocumentRAGService.buildContextualQuery(prompt: rawText, history: conversationHistory)
+                        let topResults = await DocumentRAGService.retrieveTopChunks(query: expandedQuery, chunks: indexedChunks, embeddingModel: embeddingModel, limit: 4)
                         if !topResults.isEmpty {
                             enrichedText += DocumentRAGService.formatContextExcerpts(topResults)
                         } else {
@@ -355,21 +356,17 @@ final class ChatViewModel: ObservableObject {
                 for: decision.intent,
                 needsVision: needsVisionNow,
                 candidates: candidates,
-                currentModel: currentSessionModel(sessionId: sessionId),
+                currentModel: nil,
                 residentModels: residentModels
             ) {
             case .selected(let name):
                 resolvedModel = name
             case .gap(let gap):
                 capabilityGap = gap
-                // Fall back to the best chat-capable model so the user still
-                // gets a reply alongside the install suggestion, rather than a
-                // dead end. An image request with no image model becomes a
-                // text answer plus a card offering to fix that.
                 let textOnly = ModelScorer.select(
                     required: [.completion],
                     candidates: candidates,
-                    currentModel: currentSessionModel(sessionId: sessionId),
+                    currentModel: nil,
                     residentModels: residentModels
                 )
                 if case .selected(let fallback) = textOnly {
@@ -424,12 +421,12 @@ final class ChatViewModel: ObservableObject {
         let canGenerateImages = await CapabilityProbe.shared
             .capabilities(for: resolvedModel).supportsImageGeneration
 
-        if decision.intent == .image && canGenerateImages {
+        if decision.intent == .image || resolvedModel == "stable-diffusion-1.5" {
             // decision.imagePrompt is already standalone with all ordinal
             // references resolved into real names by SemanticRouter, so the
             // diffusion model never sees "number 2" and can't draw a numeral.
             let prompt = decision.imagePrompt.isEmpty ? enrichedText : decision.imagePrompt
-            sendImageGeneration(prompt: prompt, model: resolvedModel, sessionId: sessionId, modelUsedTag: modelUsedTag, routerModel: routerModel)
+            sendImageGeneration(prompt: prompt, model: "stable-diffusion-1.5", sessionId: sessionId, modelUsedTag: modelUsedTag ?? "Stable Diffusion 1.5", routerModel: routerModel)
         } else {
             // Resolve ordinal back-references ("the no.8 name you gave me")
             // before the model sees the turn. Counting list positions across a
@@ -450,6 +447,31 @@ final class ChatViewModel: ObservableObject {
 
             sendChat(prompt: textForModel, model: resolvedModel, sessionId: sessionId, modelUsedTag: modelUsedTag, imageData: effectiveImageData, prependNote: visionFallbackNote, routerModel: routerModel, rawUserText: rawText, installedModelNames: installedModelNames)
         }
+    }
+
+    /// Retries the last assistant response by removing the previous assistant turn and re-dispatching the prompt.
+    func regenerateLastResponse(targetSessionId: UUID?, installedModelNames: [String], realSizesBytes: [String: Int64]) {
+        guard let sessionId = targetSessionId ?? activeSessionId,
+              let index = sessions.firstIndex(where: { $0.id == sessionId }),
+              !isStreaming else { return }
+
+        var msgs = sessions[index].messages
+        guard let last = msgs.last, last.role == "assistant" else { return }
+
+        msgs.removeLast()
+        sessions[index].messages = msgs
+
+        guard let lastUser = msgs.last(where: { $0.role == "user" }) else { return }
+
+        let model = sessions[index].modelName
+        _ = send(
+            promptText: lastUser.content,
+            using: model,
+            targetSessionId: sessionId,
+            installedModelNames: installedModelNames,
+            realSizesBytes: realSizesBytes,
+            attachments: lastUser.attachments
+        )
     }
 
     /// Conversation so far as (role, content) pairs for the router, with image
@@ -496,6 +518,7 @@ final class ChatViewModel: ObservableObject {
         Current Date and Time: \(dateString) (\(timezone))
         Operating System: macOS
         Always use this real-time system clock information to accurately answer user questions about the current date, time, day of the week, or year.
+        CRITICAL RULE: Do NOT review, analyze, retract, or apologize for past assistant messages in the conversation transcript unless the user explicitly asks you to audit a prior response. Focus 100% on answering the user's latest prompt directly.
         """
         return OllamaManager.ChatMessage(role: "system", content: sysContent)
     }
@@ -668,9 +691,42 @@ final class ChatViewModel: ObservableObject {
                 // Inject real-time system date & time so LLMs can answer machine-level date/time questions
                 request.insert(Self.systemEnvironmentMessage, at: 0)
 
+                // Hybrid Web Search Fallback: If query needs real-time info and online, inject top snippets
+                let userQuery = rawUserText.isEmpty ? prompt : rawUserText
+                var effectiveSearchQuery = userQuery
+                let sanitized = WebSearchService.shared.sanitizeQuery(userQuery)
+                if (sanitized.count < 6 || sanitized == "answer" || sanitized == "for answer") && historyMessages.count > 1 {
+                    if let priorUserMsg = historyMessages.reversed().first(where: { $0.role == "user" && $0.content != userQuery }) {
+                        effectiveSearchQuery = priorUserMsg.content
+                    }
+                }
+
+                if WebSearchService.requiresWebSearch(prompt: effectiveSearchQuery) {
+                    let results = await WebSearchService.shared.search(query: effectiveSearchQuery)
+                    if !results.isEmpty {
+                        var snippetText = "AUTHORITATIVE SYSTEM INSTRUCTION: Real-time live web search results for the user's query '\(userQuery)' have ALREADY been fetched from the internet for you below. Use these live search results to answer the user's question directly and accurately. Do NOT state that you lack internet access, because the live internet results are provided right here:\n\n--- [Live Web Search Results] ---\n"
+                        for res in results {
+                            snippetText += "• \(res.title): \"\(res.snippet)\" (\(res.url))\n"
+                        }
+                        snippetText += "--- [End Web Search Results] ---\n"
+                        request.insert(OllamaManager.ChatMessage(role: "system", content: snippetText), at: 0)
+
+                        // ALSO append directly into the last user message text in request so small models (Llama 3.2 3B) CANNOT ignore it!
+                        if let lastUserIdx = request.lastIndex(where: { $0.role == "user" }) {
+                            var updatedContent = request[lastUserIdx].content
+                            updatedContent += "\n\n🌐 [LIVE WEB SEARCH RESULTS FROM INTERNET]:\n"
+                            for res in results {
+                                updatedContent += "• \(res.title): \"\(res.snippet)\" (\(res.url))\n"
+                            }
+                            updatedContent += "--- [END WEB SEARCH RESULTS] ---\n(Answer my question above directly using these live web search results.)"
+                            request[lastUserIdx] = OllamaManager.ChatMessage(role: "user", content: updatedContent)
+                        }
+                    }
+                }
+
                 // Inject remembered facts from *previous* conversations
                 let memories = await retrieveMemories(
-                    prompt: rawUserText.isEmpty ? prompt : rawUserText,
+                    prompt: userQuery,
                     installedModelNames: installedModelNames
                 )
                 if let memoryMessage = MemoryStore.systemMessage(for: memories) {
@@ -685,6 +741,8 @@ final class ChatViewModel: ObservableObject {
                 }
                 let keepAliveSeconds = deviceSpecs.totalRAMGB <= 8.5 ? 15 : nil
 
+                PerformanceMonitor.shared.startStream()
+
                 try await ollama.chat(
                     model: model,
                     messages: fitted.messages,
@@ -694,10 +752,12 @@ final class ChatViewModel: ObservableObject {
                     guard let self,
                           let idx = self.sessions.firstIndex(where: { $0.id == sessionId }),
                           self.sessions[idx].messages.indices.contains(assistantIndex) else { return }
+                    PerformanceMonitor.shared.recordToken()
                     self.sessions[idx].messages[assistantIndex].content += token
                 }
             } catch {
                 if Task.isCancelled {
+                    PerformanceMonitor.shared.stopStream()
                     self.isStreaming = false
                     self.activeStreamTask = nil
                     return
@@ -707,6 +767,7 @@ final class ChatViewModel: ObservableObject {
                     self.sessions[idx].messages[assistantIndex].content += "⚠️ Error: \(error.localizedDescription)"
                 }
             }
+            PerformanceMonitor.shared.stopStream()
             self.isStreaming = false
             self.activeStreamTask = nil
             self.persistSession(id: sessionId)
@@ -842,7 +903,7 @@ final class ChatViewModel: ObservableObject {
         // cancels this in-flight generation.
         Task {
             do {
-                let imageData = try await ollama.generateImage(model: model, prompt: prompt)
+                let imageData = try await ImageGenerationService.shared.generateImage(prompt: prompt)
                 if let idx = sessions.firstIndex(where: { $0.id == sessionId }),
                    sessions[idx].messages.indices.contains(assistantIndex) {
                     sessions[idx].messages[assistantIndex].imageData = imageData

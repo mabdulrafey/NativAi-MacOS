@@ -137,6 +137,45 @@ final class RoutingFastPathTests: XCTestCase {
         assertClassified("explain the history of these landmarks", intent: .general, needsVision: false)
         assertClassified("give me historical context", intent: .general, needsVision: false)
         assertClassified("tell me background on this", intent: .general, needsVision: false)
+        assertClassified("explain that further", intent: .general, needsVision: false)
+        assertClassified("why did you pick that color", intent: .general, needsVision: false)
+        assertClassified("can you elaborate on point 2", intent: .general, needsVision: false)
+    }
+
+    // MARK: - Expanded Domain Precision Tests
+
+    func testWebAndUICodeDesignRoutesToCoding() {
+        assertClassified("design a landing page in html", intent: .coding, needsVision: false)
+        assertClassified("write css layout for navbar", intent: .coding, needsVision: false)
+        assertClassified("create a tailwind UI button", intent: .coding, needsVision: false)
+    }
+
+    func testShellAndTerminalScriptsRouteToCoding() {
+        assertClassified("write a bash script to backup my directory", intent: .coding, needsVision: false)
+        assertClassified("python script for file conversion", intent: .coding, needsVision: false)
+        assertClassified("docker compose file for postgres", intent: .coding, needsVision: false)
+        assertClassified("git command to undo commit", intent: .coding, needsVision: false)
+    }
+
+    func testMathAndQuantitativeReasoningRouteToGeneral() {
+        assertClassified("solve this equation", intent: .general, needsVision: false)
+        assertClassified("calculate derivative of sin(x)", intent: .general, needsVision: false)
+        assertClassified("explain pythagorean theorem", intent: .general, needsVision: false)
+        assertClassified("convert 50 miles to km", intent: .general, needsVision: false)
+    }
+
+    func testBusinessStrategyAndComparisonsRouteToGeneral() {
+        assertClassified("compare React vs Vue", intent: .general, needsVision: false)
+        assertClassified("what are alternatives to Docker", intent: .general, needsVision: false)
+        assertClassified("swot analysis of Tesla", intent: .general, needsVision: false)
+    }
+
+    func testArtStylesAndAestheticGenerationRouteToImage() {
+        assertClassified("draw a photo in anime style", intent: .image, needsVision: false)
+        assertClassified("generate a realistic portrait of a knight", intent: .image, needsVision: false)
+        assertClassified("make a watercolor painting of a sunset", intent: .image, needsVision: false)
+        assertClassified("render a 3d isometric room", intent: .image, needsVision: false)
+        assertClassified("cyberpunk cityscape picture", intent: .image, needsVision: false)
     }
 
     // MARK: - Deferral

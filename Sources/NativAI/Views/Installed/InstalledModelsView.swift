@@ -8,6 +8,13 @@ import SwiftUI
 
 struct InstalledModelsView: View {
     @EnvironmentObject var appState: AppState
+    @State private var searchText = ""
+
+    private var filteredModels: [OllamaManager.InstalledModel] {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if trimmed.isEmpty { return appState.installedModels }
+        return appState.installedModels.filter { $0.name.lowercased().contains(trimmed) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,7 +25,7 @@ struct InstalledModelsView: View {
                 emptyState
             } else {
                 List {
-                    ForEach(appState.installedModels) { model in
+                    ForEach(filteredModels) { model in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -46,6 +53,7 @@ struct InstalledModelsView: View {
                     }
                 }
                 .listStyle(.inset)
+                .searchable(text: $searchText, prompt: "Filter installed models...")
             }
         }
         .task {
@@ -58,28 +66,31 @@ struct InstalledModelsView: View {
             Text("Installed Models")
                 .font(.headline)
             Spacer()
-            Text("\(appState.totalDiskUsageGB, specifier: "%.1f") GB used")
+            Text("\(appState.installedModels.count) models (\(String(format: "%.1f GB", appState.totalDiskUsageGB)))")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding(16)
+        .padding()
     }
 
     private var emptyState: some View {
         VStack(spacing: 12) {
             Spacer()
-            Image(systemName: "internaldrive")
+            Image(systemName: "square.stack.3d.up.slash")
                 .font(.system(size: 40))
                 .foregroundStyle(.secondary)
-            Text("No models installed")
+            Text("No Models Installed")
                 .font(.headline)
+            Text("Browse the catalog to download local AI models.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     private func sizeString(_ bytes: Int64) -> String {
-        let gb = Double(bytes) / 1_073_741_824.0
-        return String(format: "%.1f GB", gb)
+        let gb = Double(bytes) / 1_000_000_000.0
+        return String(format: "%.2f GB", gb)
     }
 }

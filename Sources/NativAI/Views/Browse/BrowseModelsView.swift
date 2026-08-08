@@ -98,6 +98,30 @@ struct BrowseModelsView: View {
                     .font(.caption)
             }
 
+            // Dynamic Model Discovery Status Badge
+            HStack(spacing: 6) {
+                if WebSearchService.shared.isOnline {
+                    Image(systemName: "network")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                    Text("🌐 Auto-Discovering New Models: Connected to Ollama Registry. Discovered models saved locally.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                } else {
+                    Image(systemName: "bolt.horizontal.icloud")
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                    Text("💾 Offline Catalog: \(DynamicCatalogDiscoveryService.shared.discoveredModels.count) auto-discovered models saved in local JSON.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color.secondary.opacity(0.08))
+            .cornerRadius(6)
+
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)

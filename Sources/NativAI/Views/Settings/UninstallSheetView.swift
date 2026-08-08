@@ -209,12 +209,18 @@ struct UninstallSheetView: View {
 
             // 2. Remove models if selected
             if shouldRemoveModels {
-                await MainActor.run { statusMessage = "Deleting downloaded AI model weights…" }
+                await MainActor.run { statusMessage = "Deleting downloaded LLM & CoreML Stable Diffusion weights…" }
+                // Remove Ollama model weights
                 runShell("rm -rf ~/.ollama/models 2>/dev/null || true")
                 let customModelsDir = ProcessInfo.processInfo.environment["OLLAMA_MODELS"]
                 if let custom = customModelsDir, !custom.isEmpty {
                     runShell("rm -rf '\(custom)' 2>/dev/null || true")
                 }
+                // Remove CoreML Stable Diffusion weights & CoreML metal caches
+                let home = FileManager.default.homeDirectoryForCurrentUser.path
+                runShell("rm -rf '\(home)/Library/Application Support/NativAI/CoreMLModels' 2>/dev/null || true")
+                runShell("rm -rf '\(home)/Library/Caches/CoreML' 2>/dev/null || true")
+                runShell("rm -rf '\(home)/Library/Caches/com.apple.metal' 2>/dev/null || true")
             }
 
             // 3. Remove Ollama runtime if selected
@@ -235,7 +241,7 @@ struct UninstallSheetView: View {
                 runShell("rm -rf '\(home)/Library/Application Support/NativAI' 2>/dev/null || true")
                 runShell("rm -rf '\(home)/Library/Caches/com.nativai.app' '\(home)/Library/Caches/mar.NativAI' '\(home)/Library/Caches/NativAI' 2>/dev/null || true")
                 runShell("rm -rf '\(home)/Library/Preferences/com.nativai.app.plist' '\(home)/Library/Preferences/mar.NativAI.plist' '\(home)/Library/Preferences/NativAI.plist' 2>/dev/null || true")
-                runShell("rm -rf '\(home)/Library/Saved Application State/com.nativai.app.savedState' '\(home)/Library/Saved Application State/mar.NativAI.savedState' 2>/dev/null || true")
+                runShell("rm -rf '\(home)/Library/Saved Application State/com.nativai.app.savedState' '\(home)/Library/Saved Application State/mar.NativAI.savedState' '\(home)/Library/Saved Application State/NativAI.savedState' 2>/dev/null || true")
                 
                 runShell("defaults delete com.nativai.app 2>/dev/null || true")
                 runShell("defaults delete mar.NativAI 2>/dev/null || true")
@@ -245,7 +251,7 @@ struct UninstallSheetView: View {
                 runShell("pkgutil --pkgs 2>/dev/null | grep -iE 'nativai|com.nativai' | xargs -I {} pkgutil --forget {} 2>/dev/null || true")
             }
 
-            // 5. Schedule self-deletion of /Applications/NativAI.app after termination
+            // 5. Schedule self-deletion of /Applications/NativAI.app after exit
             runShell("nohup sh -c 'sleep 1 && rm -rf /Applications/NativAI.app' >/dev/null 2>&1 &")
 
             await MainActor.run {
@@ -254,8 +260,8 @@ struct UninstallSheetView: View {
                 isFinished = true
                 
                 // Quit immediately after brief display
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    NSApp.terminate(nil)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    exit(0)
                 }
             }
         }

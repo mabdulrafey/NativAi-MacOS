@@ -5,21 +5,9 @@
  */
 
 import SwiftUI
+import AppKit
 
 /// A lightweight block-level markdown renderer for chat messages.
-///
-/// Why this exists: SwiftUI's `Text(AttributedString(markdown:))` can only
-/// render *inline* attributes (bold/italic/code span) within one continuous
-/// text flow — it cannot render block-level structure (separate paragraphs,
-/// headers, bullet lists) as visually distinct elements, even when parsed
-/// with `.full` syntax. Parsing with `.full` correctly identifies "this is a
-/// heading" / "this is a new paragraph" / "this is a list item" as separate
-/// blocks, but `Text` then silently collapses them all into one unbroken run
-/// with no spacing — which is exactly the squished, no-paragraph-breaks
-/// output this was built to fix. This renderer manually splits the raw
-/// markdown into blocks (by blank lines / heading markers / list markers)
-/// and renders each block as its own SwiftUI view with real vertical spacing,
-/// indentation, and bullet glyphs.
 struct MarkdownBlockView: View {
     let raw: String
 
@@ -38,7 +26,7 @@ struct MarkdownBlockView: View {
         case heading(text: String, level: Int)
         case bulletList(items: [String])
         case numberedList(items: [(number: Int, text: String)])
-        case codeBlock(text: String)
+        case codeBlock(text: String, language: String?)
         case paragraph(text: String)
     }
 
@@ -51,6 +39,7 @@ struct MarkdownBlockView: View {
         var currentBulletItems: [String] = []
         var currentNumberedItems: [(number: Int, text: String)] = []
         var inCodeBlock = false
+        var codeBlockLanguage: String? = nil
         var codeBlockLines: [String] = []
 
         func flushParagraph() {
@@ -66,12 +55,6 @@ struct MarkdownBlockView: View {
                 currentBulletItems = []
             }
         }
-        // Deliberately NOT flushed when a bullet sub-list interrupts a
-        // numbered sequence (e.g. "1. Heading" followed by "- sub bullet"
-        // followed by "2. Next heading") — model output commonly nests
-        // bullets under numbered steps. Flushing on every interruption is
-        // what caused every numbered item to become an isolated single-item
-        // list that always rendered as "1." regardless of its real position.
         func flushNumbered() {
             if !currentNumberedItems.isEmpty {
                 blocks.append(.numberedList(items: currentNumberedItems))
@@ -82,15 +65,18 @@ struct MarkdownBlockView: View {
         for rawLine in lines {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
 
-            // Fenced code blocks (```...```)
+            // Fenced code blocks (```swift ... ```)
             if line.hasPrefix("```") {
                 if inCodeBlock {
-                    blocks.append(.codeBlock(text: codeBlockLines.joined(separator: "\n")))
+                    blocks.append(.codeBlock(text: codeBlockLines.joined(separator: "\n"), language: codeBlockLanguage))
                     codeBlockLines = []
+                    codeBlockLanguage = nil
                     inCodeBlock = false
                 } else {
                     flushParagraph(); flushBullets(); flushNumbered()
                     inCodeBlock = true
+                    let lang = String(line.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    codeBlockLanguage = lang.isEmpty ? nil : lang
                 }
                 continue
             }
@@ -112,36 +98,26 @@ struct MarkdownBlockView: View {
             }
 
             // Bullet list items: -, *, •
-            // Note: does NOT flush an in-progress numbered list — model
-            // output frequently nests bullets under a numbered step, and
-            // flushing here was the root cause of every numbered item
-            // rendering as "1." (each one became an isolated single-item list).
             if let bulletText = matchBullet(line) {
                 flushParagraph()
                 currentBulletItems.append(bulletText)
                 continue
             }
 
-            // Numbered list items: "1. ", "2. ", etc. Preserves the actual
-            // number the model wrote, rather than re-deriving it from array
-            // position — needed because bullets interrupting the sequence
-            // mean "array position" no longer matches the model's intended
-            // step number once nesting is involved.
+            // Numbered list items: "1. ", "2. ", etc.
             if let numberedMatch = matchNumbered(line) {
                 flushParagraph(); flushBullets()
                 currentNumberedItems.append(numberedMatch)
                 continue
             }
 
-            // Otherwise: accumulate into the current paragraph. This DOES
-            // flush both lists, since plain prose genuinely ends any list.
             flushBullets(); flushNumbered()
             currentParagraphLines.append(line)
         }
 
         flushParagraph(); flushBullets(); flushNumbered()
         if inCodeBlock, !codeBlockLines.isEmpty {
-            blocks.append(.codeBlock(text: codeBlockLines.joined(separator: "\n")))
+            blocks.append(.codeBlock(text: codeBlockLines.joined(separator: "\n"), language: codeBlockLanguage))
         }
         return blocks
     }
@@ -214,13 +190,8 @@ struct MarkdownBlockView: View {
                 }
             }
 
-        case .codeBlock(let text):
-            Text(text)
-                .font(.system(.caption, design: .monospaced))
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+        case .codeBlock(let text, let language):
+            CodeBlockContainerView(text: text, language: language)
         }
     }
 
@@ -232,10 +203,6 @@ struct MarkdownBlockView: View {
         }
     }
 
-    /// Renders inline markdown (bold/italic/code span) within a single block
-    /// of text — this is the one place AttributedString's markdown parsing
-    /// is actually the right tool, since we've already split out block
-    /// structure ourselves above.
     private func inlineText(_ text: String) -> Text {
         if let attributed = try? AttributedString(
             markdown: text,
@@ -244,5 +211,57 @@ struct MarkdownBlockView: View {
             return Text(attributed)
         }
         return Text(text)
+    }
+}
+
+/// Rich Code Block container view with Copy Code button and language badge.
+struct CodeBlockContainerView: View {
+    let text: String
+    let language: String?
+    @State private var didCopy = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text((language ?? "code").uppercased())
+                    .font(.caption2.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                    didCopy = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        didCopy = false
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: didCopy ? "checkmark.circle.fill" : "doc.on.doc")
+                        Text(didCopy ? "Copied" : "Copy Code")
+                    }
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(didCopy ? Color.green : Color.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+
+            Divider()
+
+            ScrollView(.horizontal, showsIndicators: true) {
+                Text(text)
+                    .font(.system(.caption, design: .monospaced))
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.4), lineWidth: 1)
+        )
     }
 }

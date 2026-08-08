@@ -3,7 +3,7 @@ import XCTest
 final class DocumentRAGServiceTests: XCTestCase {
 
     func testChunkingSplitsLargeTextWithOverlap() {
-        let sampleText = (1...1000).map { "word\($0)" }.joined(separator: " ")
+        let sampleText = (1...1000).map { "Sentence \($0) is a detailed factual statement." }.joined(separator: " ")
         let chunks = DocumentRAGService.splitIntoChunks(text: sampleText, fileName: "test_doc.txt", chunkSizeWords: 300, overlapWords: 50)
 
         XCTAssertFalse(chunks.isEmpty)

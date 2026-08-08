@@ -188,12 +188,15 @@ enum ModelScorer {
             }
         }
 
-        // Mild penalty for very small context windows: such models can answer
-        // but truncate long conversations badly. Measured live, moondream:1.8b
-        // reports only 2048 tokens, so it should lose to a roomier vision model
-        // when one is installed — while still remaining fully usable alone.
+        // Mild penalty for very small context windows
         if candidate.capabilities.contextLength < 4096 {
             score -= 6
+        }
+
+        // Heavy penalty for specialized vision models (moondream) on pure text turns.
+        // Moondream is an image-to-text model only and outputs "No" to plain text prompts.
+        if isPureTextTurn && candidate.name.lowercased().contains("moondream") {
+            score -= 50
         }
 
         return score
