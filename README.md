@@ -4,8 +4,18 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014.0%2B-apple.svg)](https://developer.apple.com/macos/)
 [![Architecture](https://img.shields.io/badge/Architecture-Apple%20Silicon%20%7C%20Intel-orange.svg)]()
 [![Swift](https://img.shields.io/badge/Swift-5.9%2B-red.svg)](https://swift.org)
+[![Download Release](https://img.shields.io/badge/Download-v1.0.0%20.pkg-brightgreen.svg?style=for-the-badge&logo=apple)](https://github.com/mabdulrafey/NativAi-MacOS/releases/download/v1.0.0/NativAI-1.0.0.pkg)
 
 **NativAI** is a high-performance, standalone desktop application engineered specifically for macOS. Designed with a privacy-first architecture, NativAI manages, routes, and executes open-source Large Language Models (LLMs), Vision models, and Embedding models locally on your Mac—with zero cloud telemetry or external API dependencies.
+
+---
+
+## ⬇️ Quick Download & Installation
+
+[<img src="https://img.shields.io/badge/Download%20NativAI%20v1.0.0%20Installer%20(.pkg)-000000?style=for-the-badge&logo=apple&logoColor=white" width="340" />](https://github.com/mabdulrafey/NativAi-MacOS/releases/download/v1.0.0/NativAI-1.0.0.pkg)
+
+- 📦 **[Direct Download: NativAI-1.0.0.pkg](https://github.com/mabdulrafey/NativAi-MacOS/releases/download/v1.0.0/NativAI-1.0.0.pkg)** *(1.9 MB Universal macOS Installer)*
+- 🏷️ **[View Latest GitHub Release Notes](https://github.com/mabdulrafey/NativAi-MacOS/releases/tag/v1.0.0)**
 
 ---
 
