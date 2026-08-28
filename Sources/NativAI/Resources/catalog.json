@@ -2824,5 +2824,29 @@
     "license": "Apache-2.0",
     "commercial_use": true,
     "speed_tier": "fast"
+  },
+  {
+    "name": "orcarouter/Qwen3.8-27B-Uncensored",
+    "display_name": "Qwen 3.8 (27B Uncensored)",
+    "category": [
+      "qa",
+      "research",
+      "coding"
+    ],
+    "role": "chat",
+    "use_cases": [
+      "general_chat",
+      "qa",
+      "research",
+      "coding"
+    ],
+    "description": "Qwen3.8-27B tensor-level abliterated/uncensored model with mmproj vision, tool calling, thinking mode, and 262K context. Zero over-refusal.",
+    "size_gb": 16.8,
+    "min_ram_gb": 18.0,
+    "min_vram_gb": 16.0,
+    "license": "Apache-2.0",
+    "commercial_use": true,
+    "speed_tier": "medium",
+    "supports_vision": true
   }
 ]

@@ -211,9 +211,25 @@ struct BrowseModelsView: View {
                 }
             }
             if let error = appState.installErrors[manualModelName.trimmingCharacters(in: .whitespaces)] {
-                Text("⚠️ \(error)")
-                    .font(.caption2)
-                    .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("⚠️ \(error)")
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+
+                    let name = manualModelName.trimmingCharacters(in: .whitespaces)
+                    if (error.contains("file does not exist") || error.contains("manifest")) && !name.contains("/") {
+                        Text("💡 Community models on Ollama require a creator prefix.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+
+                        Button("Try 'orcarouter/\(name)'") {
+                            manualModelName = "orcarouter/\(name)"
+                            pullManualModel()
+                        }
+                        .font(.caption2.weight(.medium))
+                        .buttonStyle(.borderless)
+                    }
+                }
             }
         }
         .padding(16)
