@@ -102,10 +102,40 @@ public struct ModelEntry: Identifiable, Codable, Equatable, Hashable, Sendable {
         supportsVision = try container.decodeIfPresent(Bool.self, forKey: .supportsVision) ?? false
     }
 
+    /// Estimated parameter count in billions, parsed from model name or display name.
+    public var parameterCountBillions: Double? {
+        let patterns = [
+            #"(?i)(?:^|[:\(\s_e])(\d+(?:\.\d+)?)\s*b(?:\b|[\):\s]|$)"#,
+            #"(?i)(\d+(?:\.\d+)?)\s*b\b"#
+        ]
+        for text in [displayName, name] {
+            for pattern in patterns {
+                if let regex = try? NSRegularExpression(pattern: pattern),
+                   let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                   match.numberOfRanges > 1,
+                   let range = Range(match.range(at: 1), in: text),
+                   let value = Double(text[range]) {
+                    return value
+                }
+            }
+        }
+        return nil
+    }
+
     /// Evaluates if and how well this model fits on the current device.
     public func compatibility(for specs: DeviceSpecs) -> CompatibilityLevel {
         if specs.totalRAMGB <= 0 {
             return .fits
+        }
+        // Strict guardrail for 8GB Macs (≤ 8.5 GB RAM):
+        // Running models larger than 4B parameters causes severe NVMe swap thrashing and system freeze.
+        if specs.totalRAMGB <= 8.5 {
+            if let params = parameterCountBillions, params > 4.0 {
+                return .unsupported
+            }
+            if sizeGB > 3.0 {
+                return .unsupported
+            }
         }
         if specs.totalRAMGB >= minRAMGB {
             return .fits

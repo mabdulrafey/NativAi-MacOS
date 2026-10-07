@@ -138,8 +138,13 @@ final class AppState: ObservableObject {
     /// `.bar`, or `.regularMaterial`, which this app uses extensively. Those
     /// resolve from the actual window's NSAppearance, so without this call,
     /// toggling the mode updated SwiftUI's value but changed nothing visible.
-    private func applyAppearance() {
-        NSApp.appearance = appearanceMode.nsAppearance
+    func applyAppearance() {
+        let appearance = appearanceMode.nsAppearance
+        NSApp.appearance = appearance
+        for window in NSApp.windows {
+            window.appearance = appearance
+            window.invalidateShadow()
+        }
     }
 
     /// When true, quitting NativAI also stops the Ollama server process (and

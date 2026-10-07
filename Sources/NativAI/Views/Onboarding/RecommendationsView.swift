@@ -93,6 +93,11 @@ private struct RecommendationCard: View {
         .padding(14)
         .background(Color(nsColor: .controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.04), radius: 3, y: 1)
     }
 
     @ViewBuilder

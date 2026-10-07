@@ -222,4 +222,41 @@ final class ModelScorerTests: XCTestCase {
         // For coding task (intent: .coding), starcoder2:3b MUST win over qwen2.5:1.5b
         XCTAssertEqual(ModelScorer.select(required: [.completion], candidates: [starCoder, qwenChat], currentModel: nil, intent: .coding), .selected("starcoder2:3b"))
     }
+
+    func testEightGBMacMarksSevenBModelAsUnsupported() {
+        let mac8GB = DeviceSpecs(totalRAMGB: 8.0, cpuCores: 8, isAppleSilicon: true, chipName: "Apple M2", gpuName: "Apple M2", vramGB: 8.0)
+        let sevenB = ModelEntry(
+            name: "qwen2.5:7b",
+            displayName: "Qwen 2.5 (7B)",
+            role: "chat",
+            useCases: ["qa"],
+            sizeGB: 4.4,
+            minRAMGB: 6.2
+        )
+        XCTAssertEqual(sevenB.parameterCountBillions, 7.0)
+        XCTAssertEqual(sevenB.compatibility(for: mac8GB), .unsupported)
+    }
+
+    func testEightGBMacAllowsThreeBModelAsFitting() {
+        let mac8GB = DeviceSpecs(totalRAMGB: 8.0, cpuCores: 8, isAppleSilicon: true, chipName: "Apple M2", gpuName: "Apple M2", vramGB: 8.0)
+        let threeB = ModelEntry(
+            name: "llama3.2:3b",
+            displayName: "Llama 3.2 (3B)",
+            role: "chat",
+            useCases: ["qa"],
+            sizeGB: 1.8,
+            minRAMGB: 4.0
+        )
+        XCTAssertEqual(threeB.parameterCountBillions, 3.0)
+        XCTAssertEqual(threeB.compatibility(for: mac8GB), .fits)
+    }
+
+    func testParameterCountParsing() {
+        let entry1 = ModelEntry(name: "phi4-mini:3.8b", displayName: "Phi-4 Mini (3.8B)", role: "chat", sizeGB: 2.3, minRAMGB: 4.0)
+        let entry2 = ModelEntry(name: "codellama:13b", displayName: "Code Llama (13B)", role: "coder", sizeGB: 7.2, minRAMGB: 16.0)
+        let entry3 = ModelEntry(name: "qwen2.5:0.5b", displayName: "Qwen 2.5 (0.5B)", role: "chat", sizeGB: 0.4, minRAMGB: 2.0)
+        XCTAssertEqual(entry1.parameterCountBillions, 3.8)
+        XCTAssertEqual(entry2.parameterCountBillions, 13.0)
+        XCTAssertEqual(entry3.parameterCountBillions, 0.5)
+    }
 }

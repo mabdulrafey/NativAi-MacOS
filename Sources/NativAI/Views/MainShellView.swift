@@ -107,22 +107,7 @@ struct MainShellView: View {
             Image(systemName: "circle.lefthalf.filled")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Picker("", selection: Binding(
-                get: { appState.appearanceMode },
-                set: { newValue in
-                    // Deferring to the next runloop tick avoids "Publishing
-                    // changes from within view updates" — SwiftUI's segmented
-                    // Picker can commit its selection binding synchronously
-                    // during its own view-update pass, and mutating an
-                    // ObservableObject's @Published property in that exact
-                    // moment is what triggers the warning (and, per Apple,
-                    // undefined behavior) even though the value change itself
-                    // is completely intentional here.
-                    DispatchQueue.main.async {
-                        appState.appearanceMode = newValue
-                    }
-                }
-            )) {
+            Picker("", selection: $appState.appearanceMode) {
                 ForEach(AppearanceMode.allCases) { mode in
                     Text(mode.label).tag(mode)
                 }

@@ -305,6 +305,11 @@ private struct BrowseModelCard: View {
         .background(Color(nsColor: .controlBackgroundColor))
         .opacity(compatibility == .unsupported ? 0.6 : 1.0)
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.04), radius: 3, y: 1)
         .confirmationDialog(
             "This model may exceed your device's memory and could run very slowly or fail to load. Install anyway?",
             isPresented: $showInstallAnywayConfirm

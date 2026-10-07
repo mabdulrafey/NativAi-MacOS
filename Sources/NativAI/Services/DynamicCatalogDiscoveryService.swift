@@ -68,13 +68,19 @@ final class DynamicCatalogDiscoveryService: ObservableObject {
     }
 
     private func buildDiscoveredEntry(name: String, specs: DeviceSpecs) -> ModelEntry? {
+        if specs.totalRAMGB <= 8.5 {
+            if name.contains("7b") || name.contains("11b") || name.contains("nemo") || name.contains("phi4") {
+                return nil
+            }
+        }
+
         let isVision = name.contains("vision")
         let isCoder = name.contains("coder")
         let isReasoning = name.contains("r1")
         let role = isVision ? "vision" : (isCoder ? "coder" : "chat")
         let category = isVision ? "image" : (isCoder ? "coding" : (isReasoning ? "research" : "qna"))
 
-        let sizeGB: Double = name.contains("1.5b") || name.contains("2b") ? 1.5 : (name.contains("3b") || name.contains("7b") ? 4.5 : 8.0)
+        let sizeGB: Double = name.contains("1.5b") || name.contains("2b") ? 1.5 : (name.contains("3b") ? 2.0 : (name.contains("7b") ? 4.5 : 8.0))
 
         return ModelEntry(
             name: name,

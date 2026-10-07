@@ -47,6 +47,7 @@ private struct ChatContentView: View {
     /// Owned by the view rather than AppState: dictation is transient composer
     /// state with no meaning outside this screen, and tying its lifetime to the
     /// view guarantees the audio engine is torn down when the chat closes.
+    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var dictation = DictationService()
     @ObservedObject private var perfMonitor = PerformanceMonitor.shared
     @State private var draftText: String = ""
@@ -71,7 +72,7 @@ private struct ChatContentView: View {
                 inputBar
             }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(colorScheme == .light ? Color(nsColor: .textBackgroundColor) : Color(nsColor: .windowBackgroundColor))
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("NativAISystemNewChat"))) { _ in
             viewModel.startNewSession(modelName: appState.selectedModelName ?? ChatViewModel.autoRouteSentinel)
         }
@@ -129,21 +130,13 @@ private struct ChatContentView: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 11)
-        .background(.bar)
+        .background(colorScheme == .light ? AnyShapeStyle(Color(nsColor: .controlBackgroundColor)) : AnyShapeStyle(.bar))
     }
 
     private var modelPicker: some View {
         Picker("", selection: Binding(
-            get: { appState.selectedModelName ?? "" },
-            set: { newValue in
-                // Deferred to next runloop tick — same fix as the appearance
-                // picker in MainShellView, avoids "Publishing changes from
-                // within view updates" triggered by the Picker committing
-                // this binding synchronously during its own update pass.
-                DispatchQueue.main.async {
-                    appState.selectedModelName = newValue
-                }
-            }
+            get: { appState.selectedModelName ?? ChatViewModel.autoRouteSentinel },
+            set: { appState.selectedModelName = $0 }
         )) {
             Text("✨ Auto").tag(ChatViewModel.autoRouteSentinel)
             ForEach(groupedModelNames(), id: \.self) { name in
@@ -345,12 +338,12 @@ private struct ChatContentView: View {
             .padding(.vertical, 9)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(.regularMaterial)
+                    .fill(colorScheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(.regularMaterial))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color(nsColor: .separatorColor).opacity(0.6), lineWidth: 1)
+                            .stroke(colorScheme == .light ? Color.black.opacity(0.12) : Color(nsColor: .separatorColor).opacity(0.6), lineWidth: 1)
                     )
-                    .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+                    .shadow(color: colorScheme == .light ? Color.black.opacity(0.06) : Color.black.opacity(0.08), radius: 6, y: 2)
             )
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
@@ -493,6 +486,7 @@ private struct ChatContentView: View {
 
 private struct MessageBubble: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.colorScheme) private var colorScheme
     let message: DisplayMessage
     @State private var isHovering = false
     @State private var didCopy = false
@@ -647,10 +641,24 @@ private struct MessageBubble: View {
     /// the tinted glass look Apple reserves for controls, not chat content.
     private var bubbleBackground: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(message.role == "user" ? AnyShapeStyle(Color.accentColor.opacity(0.16)) : AnyShapeStyle(.regularMaterial))
+            .fill(
+                message.role == "user"
+                    ? AnyShapeStyle(Color.accentColor.opacity(colorScheme == .light ? 0.14 : 0.22))
+                    : (colorScheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(.regularMaterial))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(message.role == "user" ? Color.accentColor.opacity(0.25) : Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+                    .stroke(
+                        message.role == "user"
+                            ? Color.accentColor.opacity(colorScheme == .light ? 0.28 : 0.35)
+                            : (colorScheme == .light ? Color.black.opacity(0.08) : Color(nsColor: .separatorColor).opacity(0.5)),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: colorScheme == .light ? Color.black.opacity(0.04) : Color.clear,
+                radius: 3,
+                y: 1
             )
     }
 

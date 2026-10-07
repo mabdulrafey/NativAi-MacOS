@@ -10,13 +10,14 @@ import SwiftUI
 /// → pick use cases → review recommendations → land in the main app.
 struct OnboardingFlowView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 0) {
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(colorScheme == .light ? Color(nsColor: .textBackgroundColor) : Color(nsColor: .windowBackgroundColor))
         .task {
             if appState.onboardingStage == .scanningSpecs {
                 await appState.runInitialScan()

@@ -246,7 +246,7 @@ struct CodeBlockContainerView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+            .background(Color(nsColor: .controlBackgroundColor))
 
             Divider()
 
@@ -257,11 +257,11 @@ struct CodeBlockContainerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+        .background(Color(nsColor: .textBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.4), lineWidth: 1)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
         )
     }
 }
