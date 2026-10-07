@@ -45,9 +45,9 @@ Built with a hardware-adaptive execution engine, NativAI dynamically scales memo
 - **Accelerate-Powered Vector Math**: Employs Apple's `Accelerate` framework (`vDSP`) for high-throughput SIMD cosine similarity retrieval.
 - **Document Chunking & PDF Extraction**: Fast, local PDFKit text extraction and 300-word chunking injects relevant excerpts into model context with zero cloud dependencies.
 
-### 4. 👁️ Session Artifact Ledger & Image Comparison
+### 4. 👁️ Session Artifact Ledger & Visual Follow-Ups
 - **Multi-Artifact Tracking**: Chronologically indexes generated and uploaded visual assets during a conversation session.
-- **Comparative Ordinal Resolution**: Resolves queries like *"compare image 1 with image 2"* or *"what font is in the logo?"* into target visual payloads for vision models.
+- **Contextual Ordinal Resolution**: Resolves queries like *"what font is in the first image?"*, *"describe the second one"*, or *"what font is in the logo?"* into target visual payloads for vision models using natural language ordinals and semantic labels.
 - **Hybrid Image Generation**: When online, generates high-res imagery via fast cloud endpoints; when offline, generates styled local vector placeholder cards—with accurate attribution badges on each output.
 
 ### 5. 🎙️ On-Device Dictation & Personalization Memory

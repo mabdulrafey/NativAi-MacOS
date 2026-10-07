@@ -1,0 +1,18 @@
+# Build the App:
+swift build -Xswiftc -plugin-path -Xswiftc /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins
+
+# Run the App:
+.build/out/Products/Debug/NativAI
+
+# Build and Run Tests (109 tests):
+swift build --build-tests \
+  -Xswiftc -plugin-path -Xswiftc /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins \
+  -Xswiftc -F -Xswiftc /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks \
+  -Xswiftc -I -Xswiftc /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib \
+  -Xlinker -F -Xlinker /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks \
+  -Xlinker -L -Xlinker /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib \
+  -Xlinker -rpath -Xlinker /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks
+
+xattr -d com.apple.FinderInfo .build/out/Products/Debug/NativAICoreTests.xctest 2>/dev/null || true
+/usr/bin/codesign --force --sign - .build/out/Products/Debug/NativAICoreTests.xctest
+/Applications/Xcode.app/Contents/Developer/usr/bin/xctest .build/out/Products/Debug/NativAICoreTests.xctest

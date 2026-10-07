@@ -533,46 +533,6 @@ final class OllamaManager {
         }
     }
 
-    // MARK: - Image generation (POST /api/generate, non-streaming)
-
-    private struct GenerateImageRequest: Codable {
-        let model: String
-        let prompt: String
-        let stream: Bool
-    }
-
-    private struct GenerateImageResponse: Codable {
-        let response: String?
-        let image: String?     // base64-encoded PNG
-        let done: Bool?
-    }
-
-    /// Generates an image from a text prompt using an image-capable model
-    /// (e.g. x/flux2-klein:4b, x/z-image-turbo:fp8). Confirmed live against
-    /// Ollama 0.32.5: the response comes back non-streamed with a top-level
-    /// `image` field containing a single base64-encoded PNG.
-    func generateImage(model: String, prompt: String) async throws -> Data {
-        var request = URLRequest(url: baseURL.appendingPathComponent("api/generate"))
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(
-            GenerateImageRequest(model: model, prompt: prompt, stream: false)
-        )
-        // Image generation can take a while (model load + inference), especially
-        // on the first call, so use the long-running session rather than the
-        // default 60s-idle-timeout shared session.
-        let (data, response) = try await longRunningSession.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw OllamaError.requestFailed("Image generation failed for model \(model)")
-        }
-
-        let decoded = try JSONDecoder().decode(GenerateImageResponse.self, from: data)
-        guard let base64 = decoded.image, let imageData = Data(base64Encoded: base64) else {
-            throw OllamaError.requestFailed("No image data returned by \(model)")
-        }
-        return imageData
-    }
-
     // MARK: - Chat (streamed token generation)
 
     /// A single chat turn on the wire.

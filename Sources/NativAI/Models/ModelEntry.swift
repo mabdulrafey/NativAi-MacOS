@@ -14,9 +14,9 @@ public enum CompatibilityLevel: String, Codable, Equatable, Sendable {
 
     public var badge: String {
         switch self {
-        case .fits: return "Fits"
-        case .slow: return "Runs slow"
-        case .unsupported: return "Unsupported"
+        case .fits: return "Fits comfortably"
+        case .slow: return "Will run, but slower"
+        case .unsupported: return "Not recommended"
         }
     }
 }
@@ -127,14 +127,27 @@ public struct ModelEntry: Identifiable, Codable, Equatable, Hashable, Sendable {
         if specs.totalRAMGB <= 0 {
             return .fits
         }
-        // Strict guardrail for 8GB Macs (≤ 8.5 GB RAM):
-        // Running models larger than 4B parameters causes severe NVMe swap thrashing and system freeze.
+        // Tiered guardrail for 8GB Macs (≤ 8.5 GB RAM):
+        // 4B and below: "Fits comfortably" (.fits)
+        // Anything above 4B up to 7B: "Will run, but slower" (.slow)
+        // 8B and up: "Not recommended" (.unsupported, won't run)
         if specs.totalRAMGB <= 8.5 {
-            if let params = parameterCountBillions, params > 4.0 {
-                return .unsupported
-            }
-            if sizeGB > 3.0 {
-                return .unsupported
+            if let params = parameterCountBillions {
+                if params >= 8.0 {
+                    return .unsupported
+                } else if params > 4.0 {
+                    return .slow
+                } else {
+                    return .fits
+                }
+            } else {
+                if sizeGB >= 4.8 {
+                    return .unsupported
+                } else if sizeGB > 2.8 {
+                    return .slow
+                } else {
+                    return .fits
+                }
             }
         }
         if specs.totalRAMGB >= minRAMGB {

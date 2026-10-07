@@ -420,7 +420,7 @@ final class ChatViewModel: ObservableObject {
             return
         }
 
-        if decision.intent == .image || resolvedModel == "stable-diffusion-1.5" {
+        if decision.intent == .image {
             // decision.imagePrompt is already standalone with all ordinal
             // references resolved into real names by SemanticRouter, so the
             // diffusion model never sees "number 2" and can't draw a numeral.
@@ -904,13 +904,12 @@ final class ChatViewModel: ObservableObject {
         // cancels this in-flight generation.
         Task {
             do {
-                let imageData = try await ImageGenerationService.shared.generateImage(prompt: prompt)
+                let (imageData, actualTag) = try await ImageGenerationService.shared.generateImage(prompt: prompt)
                 if let idx = sessions.firstIndex(where: { $0.id == sessionId }),
                    sessions[idx].messages.indices.contains(assistantIndex) {
                     sessions[idx].messages[assistantIndex].imageData = imageData
                     sessions[idx].messages[assistantIndex].content = ""
-                    let isOnline = WebSearchService.shared.isOnline
-                    sessions[idx].messages[assistantIndex].modelUsed = isOnline ? "Pollinations AI" : "Offline Canvas"
+                    sessions[idx].messages[assistantIndex].modelUsed = actualTag
 
                     // Record the generated image in the ledger now, while the
                     // prompt that produced it is still in hand. Recording it at

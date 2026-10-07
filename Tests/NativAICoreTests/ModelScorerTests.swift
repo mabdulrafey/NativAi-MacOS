@@ -223,7 +223,7 @@ final class ModelScorerTests: XCTestCase {
         XCTAssertEqual(ModelScorer.select(required: [.completion], candidates: [starCoder, qwenChat], currentModel: nil, intent: .coding), .selected("starcoder2:3b"))
     }
 
-    func testEightGBMacMarksSevenBModelAsUnsupported() {
+    func testEightGBMacMarksSevenBModelAsSlow() {
         let mac8GB = DeviceSpecs(totalRAMGB: 8.0, cpuCores: 8, isAppleSilicon: true, chipName: "Apple M2", gpuName: "Apple M2", vramGB: 8.0)
         let sevenB = ModelEntry(
             name: "qwen2.5:7b",
@@ -234,7 +234,21 @@ final class ModelScorerTests: XCTestCase {
             minRAMGB: 6.2
         )
         XCTAssertEqual(sevenB.parameterCountBillions, 7.0)
-        XCTAssertEqual(sevenB.compatibility(for: mac8GB), .unsupported)
+        XCTAssertEqual(sevenB.compatibility(for: mac8GB), .slow)
+    }
+
+    func testEightGBMacMarksEightBModelAsUnsupported() {
+        let mac8GB = DeviceSpecs(totalRAMGB: 8.0, cpuCores: 8, isAppleSilicon: true, chipName: "Apple M2", gpuName: "Apple M2", vramGB: 8.0)
+        let eightB = ModelEntry(
+            name: "llama3:8b",
+            displayName: "Llama 3 (8B)",
+            role: "chat",
+            useCases: ["qa"],
+            sizeGB: 4.7,
+            minRAMGB: 8.0
+        )
+        XCTAssertEqual(eightB.parameterCountBillions, 8.0)
+        XCTAssertEqual(eightB.compatibility(for: mac8GB), .unsupported)
     }
 
     func testEightGBMacAllowsThreeBModelAsFitting() {

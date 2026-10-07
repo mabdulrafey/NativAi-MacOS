@@ -101,17 +101,17 @@ struct BrowseModelsView: View {
             // Dynamic Model Discovery Status Badge
             HStack(spacing: 6) {
                 if WebSearchService.shared.isOnline {
-                    Image(systemName: "network")
+                    Image(systemName: "sparkles")
                         .font(.caption2)
                         .foregroundColor(.green)
-                    Text("🌐 Auto-Discovering New Models: Connected to Ollama Registry. Discovered models saved locally.")
+                    Text("✨ Curated Model Additions: Hardware-compatible open models activated in local catalog.")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 } else {
                     Image(systemName: "bolt.horizontal.icloud")
                         .font(.caption2)
                         .foregroundColor(.orange)
-                    Text("💾 Offline Catalog: \(DynamicCatalogDiscoveryService.shared.discoveredModels.count) auto-discovered models saved in local JSON.")
+                    Text("💾 Local Catalog: \(DynamicCatalogDiscoveryService.shared.discoveredModels.count) curated models saved in local JSON.")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }

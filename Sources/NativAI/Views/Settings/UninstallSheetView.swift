@@ -209,28 +209,26 @@ struct UninstallSheetView: View {
 
             // 2. Remove models if selected
             if shouldRemoveModels {
-                await MainActor.run { statusMessage = "Deleting downloaded LLM & CoreML Stable Diffusion weights…" }
+                await MainActor.run { statusMessage = "Deleting downloaded LLM weights…" }
                 // Remove Ollama model weights
                 runShell("rm -rf ~/.ollama/models 2>/dev/null || true")
                 let customModelsDir = ProcessInfo.processInfo.environment["OLLAMA_MODELS"]
                 if let custom = customModelsDir, !custom.isEmpty {
                     runShell("rm -rf '\(custom)' 2>/dev/null || true")
                 }
-                // Remove CoreML Stable Diffusion weights & CoreML metal caches
                 let home = FileManager.default.homeDirectoryForCurrentUser.path
-                runShell("rm -rf '\(home)/Library/Application Support/NativAI/CoreMLModels' 2>/dev/null || true")
-                runShell("rm -rf '\(home)/Library/Caches/CoreML' 2>/dev/null || true")
                 runShell("rm -rf '\(home)/Library/Caches/com.apple.metal' 2>/dev/null || true")
             }
 
             // 3. Remove Ollama runtime if selected
             if shouldRemoveOllama {
                 await MainActor.run { statusMessage = "Removing Ollama server & runtime…" }
+                let home = FileManager.default.homeDirectoryForCurrentUser.path
                 runShell("rm -rf ~/.ollama 2>/dev/null || true")
                 runShell("rm -f /opt/homebrew/bin/ollama /usr/local/bin/ollama 2>/dev/null || true")
                 runShell("rm -rf /Applications/Ollama.app 2>/dev/null || true")
                 runShell("rm -f ~/Library/LaunchAgents/homebrew.mxcl.ollama.plist 2>/dev/null || true")
-                runShell("rm -rf '~/Library/Application Support/Ollama' 2>/dev/null || true")
+                runShell("rm -rf '\(home)/Library/Application Support/Ollama' 2>/dev/null || true")
                 runShell("rm -rf ~/Library/Caches/ollama 2>/dev/null || true")
             }
 

@@ -43,10 +43,4 @@ final class PerformanceMonitor: ObservableObject {
             self.isStreaming = false
         }
     }
-
-    func updateRAMUsage(bytes: Int64) {
-        DispatchQueue.main.async {
-            self.activeRAMUsageMB = Double(bytes) / (1024.0 * 1024.0)
-        }
-    }
 }

@@ -11,7 +11,7 @@ graph TD
     AppState --> Router[SemanticRouter & IntentClassifier]
     AppState --> RAG[DocumentRAGService & PDFKit]
     AppState --> Memory[MemoryStore & MemoryFact Ledger]
-    AppState --> Scorer[ModelScorer & HardwareScanner]
+    AppState --> Scorer[ModelScorer & SpecScanner]
     Router --> OllamaMgr[OllamaManager - HTTP 127.0.0.1:11434]
     Scorer --> OllamaMgr
     RAG --> Accelerate[Accelerate vDSP Vector Math]
@@ -24,8 +24,8 @@ NativAI enforces strict network isolation for core operations:
 * **100% On-Device / Zero Network**: Text chat inference, document parsing/RAG, memory vector search, and voice dictation (`SFSpeechRecognizer` with `requiresOnDeviceRecognition = true`) execute entirely on local hardware with zero cloud telemetry.
 * **Controlled Network Egress**:
   * **Engine Installer**: Downloads the official Ollama macOS package from `ollama.com` if not already installed.
-  * **Web Search**: Queries DuckDuckGo HTML / `wttr.in` only when the user explicitly triggers real-time search.
-  * **Image Generation**: Generates images via `image.pollinations.ai` (badged as "Pollinations AI") with an offline aesthetic canvas fallback (badged as "Offline Canvas").
+  * **Web Search**: Automatically triggered when a query contains temporal/factual keywords ("weather", "news", "today", "2026", "who won", "stock price", "latest", "ceo of") or explicit search requests, querying DuckDuckGo HTML / `wttr.in`.
+  * **Image Generation**: Generates images via `image.pollinations.ai` (badged as "Pollinations AI" only upon successful online generation) with an offline vector canvas fallback (badged as "Offline Canvas") when disconnected or when remote requests fail.
 
 ---
 
@@ -40,38 +40,47 @@ Sources/NativAI/
 │   ├── ModelEntry.swift                # Catalog model entry & compatibility representation
 │   ├── ModelCapabilities.swift         # Probed model capabilities (vision, tools, thinking)
 │   ├── DisplayMessage.swift            # Chat message entity & transcript serialization
-│   ├── MessageAttachment.swift         # Typed attachments (images, text/code files)
+│   ├── MessageAttachment.swift         # Typed attachments: images, text/code files
 │   ├── SessionArtifact.swift           # Multi-modal artifact ledger & ordinal references
 │   ├── ChatSession.swift               # Session persistence & auto-title lifecycle
 │   └── MemoryFact.swift                # Normalized cross-session preference/fact ledger
 │
 ├── Services/                           # Core Engine Services
 │   ├── OllamaManager.swift             # Process supervisor & REST API client (127.0.0.1:11434)
-│   ├── HardwareScanner.swift           # Metal & IOKit RAM/VRAM profiler
+│   ├── SpecScanner.swift               # Hardware scanner using sysctl & system_profiler
 │   ├── SemanticRouter.swift            # Fast-path pattern matching & intent classification
-│   ├── ModelScorer.swift               # RAM tier scoring with model stickiness
+│   ├── ModelScorer.swift               # Capability matching with 1.8x model stickiness margin
 │   ├── CapabilityProbe.swift           # Dynamic /api/show capability discovery
 │   ├── DocumentRAGService.swift        # In-memory document chunking & retrieval
 │   ├── EmbeddingService.swift          # Accelerate framework (vDSP) SIMD vector dot product
 │   ├── MemoryStore.swift               # Persistent long-term memory store
+│   ├── MemoryExtractor.swift           # Rule-based preference/fact extraction
 │   ├── ConversationDigest.swift        # Token-aware monotonic compaction for long chats
 │   ├── TokenBudget.swift               # Dynamic context window allocator
 │   ├── IntentClassifier.swift          # Domain classifier (.general, .coding, .vision, .image)
-│   ├── DynamicCatalogDiscoveryService.swift # Curated hardware compatibility evaluator
-│   ├── AudioTranscriptionService.swift# On-device Speech-to-Text via Speech framework
+│   ├── CatalogService.swift            # Model catalog loader & tier recommendation engine
+│   ├── DynamicCatalogDiscoveryService.swift # Curated hardware-compatible model catalog activation
+│   ├── DictationService.swift          # On-device Speech-to-Text via Speech framework
 │   ├── WebSearchService.swift          # DuckDuckGo HTML scraper & weather lookups
-│   └── PerformanceMonitor.swift        # Real-time token generation throughput tracker
+│   ├── ImageGenerationService.swift    # Hybrid Pollinations AI & offline vector canvas art
+│   ├── PerformanceMonitor.swift        # Real-time token generation throughput tracker
+│   ├── ContextualReferenceResolver.swift # Resolves natural language back-references
+│   ├── ChatHistoryStore.swift          # JSON persistence for chat sessions
+│   ├── ChatTitleGenerator.swift        # Lightweight prompt titling
+│   ├── SessionExportService.swift      # Session transcript export
+│   └── FormattingHelpers.swift         # Byte and token formatting utilities
 │
 ├── Views/                              # Native SwiftUI UI Layer
-│   ├── Chat/                           # ChatView, ChatViewModel, Transcript, Composer
-│   ├── Sidebar/                        # Session sidebar, history, and action items
-│   ├── Models/                         # Model catalog, download cards, RAM badges
-│   ├── Settings/                       # Device specs, system status, clear caches
-│   └── Components/                     # Glassmorphic badges, token monitors, canvas cards
+│   ├── MainShellView.swift             # Main application three-column layout shell
+│   ├── Browse/                         # Model catalog, manual pull popover, compatibility badges
+│   ├── Chat/                           # ChatView, ChatViewModel, Transcript, Composer, GapCard
+│   ├── Installed/                      # Installed model management, delete actions, size tracking
+│   ├── Onboarding/                     # Welcome flow, hardware tier profiling, model recommendations
+│   ├── Settings/                       # Device specs, system status, storage breakdown, uninstaller
+│   └── Storage/                        # Disk usage inspector and model cleanup tools
 │
 ├── Resources/                          # Bundled Resources
-│   ├── catalog.json                    # Curated base model metadata catalog
-│   └── Assets.xcassets                 # Icons and color assets
+│   └── catalog.json                    # Curated base model metadata catalog
 │
 └── AppState.swift                      # Central reactive application state store
 ```
@@ -81,26 +90,29 @@ Sources/NativAI/
 ## 3. Core Architectural Subsystems
 
 ### 3.1 Hardware-Adaptive Profiling & Memory Safety
-* **Metal & IOKit Inspection**: `HardwareScanner` inspects `MTLDevice.recommendedMaxWorkingSetSize` and total physical memory to compute GPU working ceilings (~75% of physical unified memory on Apple Silicon).
+* **Hardware Inspection**: `SpecScanner` inspects `sysctlbyname("hw.memsize")` for physical memory, `sysctlbyname("hw.ncpu")` for core counts, and `sysctlbyname("hw.optional.arm64")` to detect Apple Silicon unified memory architecture. Human-readable chip and GPU names are retrieved via `system_profiler`.
 * **Tier Categorization**:
-  * **Essential** (`≤ 8 GB` RAM): Capped at 2K–4K context; restricted to lightweight models (1B–3B).
-  * **Performance** (`≤ 16 GB` RAM): 8K context; supports 7B–14B models.
-  * **Workstation** (`> 16 GB` RAM): Up to 32K context; supports large 32B–70B models.
-* **OOM Prevention**: `OllamaManager.unloadInactiveModels()` proactively evicts resident models from VRAM before loading new ones on memory-constrained devices.
+  * **Essential** (`< 16 GB` RAM): Capped at 4K–8K context; 4B models fit comfortably, >4B models run slower, and 8B+ models are unsupported.
+  * **Performance** (`16 to < 24 GB` RAM): Scaled up to 16,384 context; supports 7B–14B models.
+  * **Workstation** (`≥ 24 GB` RAM): Unconstrained context; supports large 32B–70B models.
+* **Dynamic Context Scaling**: `DeviceSpecs.effectiveContextLength` dynamically clamps context windows based on RAM and model size (e.g. 4,096 tokens for >2 GB models on ≤ 8.5 GB Macs, 8,192 for smaller models; up to 16,384 tokens on 16 GB machines).
+* **OOM Prevention**: `ChatViewModel` proactively evicts resident models using `keep_alive: 0` when switching models on 8GB machines to prevent NVMe disk swapping.
 
 ### 3.2 Semantic Routing & Model Stickiness
 * **Intent Classification**: Evaluates user prompts across regex fast-paths and semantic signals into `.general`, `.coding`, `.vision`, or `.image`.
-* **Model Stickiness**: To prevent costly cold model swaps mid-conversation, `ModelScorer` applies a stickiness score bonus to the current resident model (`currentSessionModel`), preserving conversation continuity unless a query strictly requires specialized capabilities (e.g. vision or coding).
+* **Model Stickiness Margin**: To avoid costly multi-second model reload overhead and mid-conversation voice shifts, `ModelScorer` implements a **1.8× margin rule**: the current resident model (`currentSessionModel`) is retained unless an alternative model scores at least 1.8× higher (calibrated to require roughly a 4× size improvement). The margin relaxes to 1.05× when transitioning from a small vision model back to general text.
 
 ### 3.3 Hardware-Accelerated Vector Similarity (Accelerate Framework)
-* **SIMD Dot Products**: `EmbeddingService` leverages Apple's `Accelerate` framework (`vDSP_dotprD`) to calculate cosine similarity between query embeddings and stored document/memory vectors.
-* **Performance**: Yields sub-millisecond similarity rankings across large vector batches without blocking the main UI thread.
+* **SIMD Dot Products**: `EmbeddingService` leverages Apple's `Accelerate` framework (`vDSP_dotprD`) to calculate cosine similarity between query embeddings and stored document/memory vectors without blocking the main UI thread.
 
-### 3.4 Document RAG & PDF Processing
-* **Native PDFKit Extraction**: Plain text is extracted directly from PDF pages using native `PDFKit`.
-* **Chunking & Indexing**: Text is chunked with sliding window token buffers, embedded via local embedding models (`nomic-embed-text`), and ranked via Accelerate cosine similarity.
+### 3.4 Automated Web Search Grounding
+* **Keyword-Driven Triggers**: `WebSearchService.requiresWebSearch` detects temporal/factual keywords ("weather", "news", "today", "2026", "who won", "stock price", "latest", "ceo of") and explicit search queries, pulling real-time snippets from DuckDuckGo HTML or `wttr.in` to ground model completions.
 
-### 3.5 Real-Time Throughput Monitoring
+### 3.5 Session Artifact Ledger & Visual Follow-Ups
+* **Artifact Tracking**: `SessionArtifact` maintains a chronological ledger of generated and uploaded visual assets.
+* **Contextual Resolution**: When users submit follow-ups like *"what font is in the first image?"* or *"describe the logo"*, `SessionArtifact.resolveTarget` resolves the query to the exact visual payload using natural language ordinals ("first", "second") and content labels.
+
+### 3.6 Real-Time Throughput Monitoring
 * **Streaming Metrics**: `PerformanceMonitor` records tokens received over elapsed streaming intervals.
 * **Header Telemetry**: The chat header dynamically displays live token throughput (e.g., `⚡ 32.4 t/s`) during generation.
 
@@ -109,6 +121,6 @@ Sources/NativAI/
 ## 4. Verification & Testing
 
 The core architecture is verified via XCTest:
-* **Test Suite**: `Tests/NativAICoreTests/Core/`
-* **Test Coverage**: 106 automated unit tests validating Token Budgeting, Conversation Compaction, Memory Fact Normalization, Hardware Adaptive Contexts, Model Scoring, and Routing Fast Paths.
+* **Test Suite**: `Tests/NativAICoreTests/`
+* **Test Coverage**: 109 automated unit tests validating Token Budgeting, Conversation Compaction, Memory Fact Normalization, Hardware Adaptive Contexts, Model Scoring, and Routing Fast Paths.
 * **Target Platforms**: Universal macOS binary (`arm64` and `x86_64`) targeting macOS 14.0+.

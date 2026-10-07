@@ -15,8 +15,8 @@ final class ImageGenerationService {
     private init() {}
 
     /// Generates image data for the given visual prompt.
-    /// Uses online fast inference when connected, and local offline SD 1.5 fallback when offline.
-    func generateImage(prompt: String) async throws -> Data {
+    /// Uses online fast inference when connected, and local offline vector canvas fallback when offline or on failure.
+    func generateImage(prompt: String) async throws -> (data: Data, sourceTag: String) {
         let cleanPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanPrompt.isEmpty else {
             throw NSError(domain: "ImageGeneration", code: 400, userInfo: [NSLocalizedDescriptionKey: "Empty prompt"])
@@ -24,12 +24,13 @@ final class ImageGenerationService {
 
         if WebSearchService.shared.isOnline {
             if let data = await generateOnlineImage(prompt: cleanPrompt) {
-                return data
+                return (data, "Pollinations AI")
             }
         }
 
         // Offline Fallback Generation
-        return try generateOfflineImage(prompt: cleanPrompt)
+        let offlineData = try generateOfflineImage(prompt: cleanPrompt)
+        return (offlineData, "Offline Canvas")
     }
 
     private func generateOnlineImage(prompt: String) async -> Data? {

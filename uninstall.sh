@@ -210,8 +210,6 @@ if [[ "${REMOVE_MODELS}" == true ]]; then
     echo ""
     echo "Deleting downloaded models…"
     remove_path "${MODELS_DIR}" "Ollama LLM models"
-    remove_path "${SUPPORT_DIR}/CoreMLModels" "CoreML Stable Diffusion models"
-    remove_path "${HOME}/Library/Caches/CoreML" "CoreML model cache"
     remove_path "${HOME}/Library/Caches/com.apple.metal" "Metal GPU shader cache"
 
     if [[ "${REMOVE_OLLAMA}" == true ]]; then

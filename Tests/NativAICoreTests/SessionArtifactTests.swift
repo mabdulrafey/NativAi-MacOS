@@ -113,13 +113,4 @@ final class SessionArtifactTests: XCTestCase {
             "Documents must not appear in the image list or vision routing would be forced for them."
         )
     }
-
-    func testResolveTargetsReturnsMultipleArtifactsForComparativePrompts() {
-        let f = mixedArtifacts
-        let resolved = SessionArtifact.resolveTargets(prompt: "compare the 1st image with the 2nd image", artifacts: f.all)
-
-        XCTAssertEqual(resolved.count, 2)
-        XCTAssertEqual(resolved.first?.id, f.logo.id)
-        XCTAssertEqual(resolved.last?.id, f.poster.id)
-    }
 }

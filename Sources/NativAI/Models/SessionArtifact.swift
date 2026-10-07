@@ -85,38 +85,6 @@ public struct SessionArtifact: Identifiable, Codable, Equatable, Sendable {
         return visualList.last
     }
 
-    /// Resolves multiple visual targets for comparative prompts.
-    public static func resolveTargets(prompt: String, artifacts: [SessionArtifact]) -> [SessionArtifact] {
-        let visualList = visuals(in: artifacts)
-        guard !visualList.isEmpty else { return [] }
-
-        let lower = prompt.lowercased()
-        let ordinalMap: [(patterns: [String], index: Int)] = [
-            (["first", "1st"], 0),
-            (["second", "2nd"], 1),
-            (["third", "3rd"], 2),
-            (["fourth", "4th"], 3),
-            (["fifth", "5th"], 4)
-        ]
-
-        var matchedIndices: [Int] = []
-        for entry in ordinalMap {
-            if entry.patterns.contains(where: { lower.contains($0) }) && entry.index < visualList.count {
-                matchedIndices.append(entry.index)
-            }
-        }
-
-        if matchedIndices.count >= 2 {
-            matchedIndices.sort()
-            return matchedIndices.map { visualList[$0] }
-        }
-
-        if let single = resolveTarget(prompt: prompt, artifacts: artifacts) {
-            return [single]
-        }
-        return []
-    }
-
     /// Formats an artifact ledger summary for context injection.
     public static func contextSummary(for artifacts: [SessionArtifact]) -> String? {
         guard !artifacts.isEmpty else { return nil }

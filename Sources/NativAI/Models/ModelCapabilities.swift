@@ -79,10 +79,6 @@ public struct ModelCapabilities: Codable, Equatable, Sendable {
         capabilities.contains(.vision)
     }
 
-    public var supportsImageGeneration: Bool {
-        capabilities.contains(.image)
-    }
-
     public func supports(_ capability: ModelCapability) -> Bool {
         capabilities.contains(capability)
     }
