@@ -345,6 +345,8 @@ final class ChatViewModel: ObservableObject {
         // Keeping the session's current model when it still qualifies avoids a
         // multi-second cold load and a mid-conversation change of voice.
         let residentModels = await OllamaManager.shared.residentModelNames()
+        let currentSessionModel = sessions[sessionIndex].messages.last(where: { $0.role == "assistant" && $0.modelUsed != nil })?.modelUsed
+            ?? (!sessions[sessionIndex].modelName.isEmpty ? sessions[sessionIndex].modelName : nil)
 
         var resolvedModel: String
         var capabilityGap: ModelScorer.CapabilityGap? = nil
@@ -356,7 +358,7 @@ final class ChatViewModel: ObservableObject {
                 for: decision.intent,
                 needsVision: needsVisionNow,
                 candidates: candidates,
-                currentModel: nil,
+                currentModel: currentSessionModel,
                 residentModels: residentModels
             ) {
             case .selected(let name):
@@ -366,7 +368,7 @@ final class ChatViewModel: ObservableObject {
                 let textOnly = ModelScorer.select(
                     required: [.completion],
                     candidates: candidates,
-                    currentModel: nil,
+                    currentModel: currentSessionModel,
                     residentModels: residentModels
                 )
                 if case .selected(let fallback) = textOnly {
@@ -418,15 +420,14 @@ final class ChatViewModel: ObservableObject {
             return
         }
 
-        let canGenerateImages = await CapabilityProbe.shared
-            .capabilities(for: resolvedModel).supportsImageGeneration
-
         if decision.intent == .image || resolvedModel == "stable-diffusion-1.5" {
             // decision.imagePrompt is already standalone with all ordinal
             // references resolved into real names by SemanticRouter, so the
             // diffusion model never sees "number 2" and can't draw a numeral.
             let prompt = decision.imagePrompt.isEmpty ? enrichedText : decision.imagePrompt
-            sendImageGeneration(prompt: prompt, model: "stable-diffusion-1.5", sessionId: sessionId, modelUsedTag: modelUsedTag ?? "Stable Diffusion 1.5", routerModel: routerModel)
+            let isOnline = WebSearchService.shared.isOnline
+            let imageTag = isOnline ? "Pollinations AI" : "Offline Canvas"
+            sendImageGeneration(prompt: prompt, model: "image-generation", sessionId: sessionId, modelUsedTag: imageTag, routerModel: routerModel)
         } else {
             // Resolve ordinal back-references ("the no.8 name you gave me")
             // before the model sees the turn. Counting list positions across a
@@ -908,6 +909,8 @@ final class ChatViewModel: ObservableObject {
                    sessions[idx].messages.indices.contains(assistantIndex) {
                     sessions[idx].messages[assistantIndex].imageData = imageData
                     sessions[idx].messages[assistantIndex].content = ""
+                    let isOnline = WebSearchService.shared.isOnline
+                    sessions[idx].messages[assistantIndex].modelUsed = isOnline ? "Pollinations AI" : "Offline Canvas"
 
                     // Record the generated image in the ledger now, while the
                     // prompt that produced it is still in hand. Recording it at

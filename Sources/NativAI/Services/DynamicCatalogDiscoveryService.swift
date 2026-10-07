@@ -7,12 +7,11 @@
 import Foundation
 import Combine
 
-/// Background Model Discovery Engine.
+/// Curated Model Catalog Expansion Service.
 ///
-/// When connected to the internet, periodically scans for new models compatible
-/// with the user's Mac hardware specs, growing the local catalog one by one
-/// without degrading app performance. Newly discovered models are saved locally
-/// to disk so they remain browsable even when offline!
+/// Evaluates a curated list of modern open-weight models (DeepSeek R1, Llama 3.2 Vision,
+/// Qwen 2.5 Coder, Mistral NeMo, Gemma 2, Phi-4) against the user's hardware profile and
+/// dynamically activates compatible additions in the local catalog.
 final class DynamicCatalogDiscoveryService: ObservableObject {
     static let shared = DynamicCatalogDiscoveryService()
 

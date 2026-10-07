@@ -6,7 +6,7 @@
 [![Swift](https://img.shields.io/badge/Swift-5.9%2B-red.svg)](https://swift.org)
 [![Download Release](https://img.shields.io/badge/Download-v1.0.0%20.pkg-brightgreen.svg?style=for-the-badge&logo=apple)](https://github.com/mabdulrafey/NativAi-MacOS/releases/download/v1.0.0/NativAI-1.0.0.pkg)
 
-**NativAI** is a high-performance, standalone desktop application engineered specifically for macOS. Designed with a privacy-first architecture, NativAI manages, routes, and executes open-source Large Language Models (LLMs), Vision models, and Embedding models locally on your Mac—with zero cloud telemetry or external API dependencies.
+**NativAI** is a high-performance, standalone desktop application engineered specifically for macOS. Designed with a privacy-first architecture, NativAI manages, routes, and executes open-source Large Language Models (LLMs), Vision models, and Embedding models locally on your Mac—with zero cloud telemetry or external API dependencies for all core intelligence (chat, document RAG, memory, and voice).
 
 ---
 
@@ -31,34 +31,45 @@ Built with a hardware-adaptive execution engine, NativAI dynamically scales memo
 
 ### 1. 🧠 Autonomous Multi-Model Routing ("Auto Mode")
 - **Intent-Driven Dispatch**: Automatically routes incoming prompts to the optimal installed model (Chat, Coder, Vision, or Image Generation) based on real-time task classification.
+- **Model Stickiness**: Prevents voice-shifting and cold reload overhead mid-conversation by holding the current resident model unless a rival substantially exceeds capability thresholds.
 - **Tag-Agnostic Model Resolution**: Seamlessly resolves model tags and variants without breaking catalog metadata.
 
 ### 2. 🛡️ Hardware-Adaptive Memory Management (RAM Optimization)
 - **Automatic Model Eviction**: Sends immediate `keep_alive: 0` eviction signals when switching models on 8GB machines to prevent NVMe disk swapping.
 - **Dynamic Context Windowing**: Scales context windows adaptively (e.g. capping at 4,096 tokens on 8GB Macs) to eliminate memory thrashing.
+- **Live Performance Monitoring**: Tracks real-time token throughput (tok/s) and displays live streaming performance in the chat interface.
 - **Circuit Breaker & Stop Button**: Real-time generation cancel button paired with a 4,096-token guardrail to prevent infinite generation loops.
 
-### 3. 📚 Offline Document RAG & Folder Search
+### 3. 📚 Offline Document RAG & PDF Reading
 - **Local Vector Embeddings**: Uses `nomic-embed-text` to generate 768-dimensional vector embeddings entirely on-device.
-- **Cosine Similarity Retrieval**: Automatically chunks long documents (>4,000 chars) into 300-word segments and injects top-matching excerpts into model context.
+- **Accelerate-Powered Vector Math**: Employs Apple's `Accelerate` framework (`vDSP`) for high-throughput SIMD cosine similarity retrieval.
+- **Document Chunking & PDF Extraction**: Fast, local PDFKit text extraction and 300-word chunking injects relevant excerpts into model context with zero cloud dependencies.
 
 ### 4. 👁️ Session Artifact Ledger & Image Comparison
 - **Multi-Artifact Tracking**: Chronologically indexes generated and uploaded visual assets during a conversation session.
-- **Comparative Ordinal Resolution**: Resolves queries like *"compare image 1 with image 2"* into target visual payloads for vision models.
+- **Comparative Ordinal Resolution**: Resolves queries like *"compare image 1 with image 2"* or *"what font is in the logo?"* into target visual payloads for vision models.
+- **Hybrid Image Generation**: When online, generates high-res imagery via fast cloud endpoints; when offline, generates styled local vector placeholder cards—with accurate attribution badges on each output.
 
 ### 5. 🎙️ On-Device Dictation & Personalization Memory
-- **Private Voice Dictation**: Leverages macOS `SFSpeechRecognizer` with forced on-device speech-to-text processing.
-- **Long-Term Memory Ledger**: Automatically extracts and stores key user preferences and facts across sessions.
+- **Private Voice Dictation**: Leverages macOS `SFSpeechRecognizer` with forced on-device speech-to-text processing (`requiresOnDeviceRecognition = true`).
+- **Long-Term Memory Ledger**: Automatically extracts and stores key user preferences and facts across sessions using normalized embeddings.
 
 ---
 
 ## 🛠 Tech Stack Breakdown
 
 - **User Interface**: Native SwiftUI & AppKit integration for liquid dark/light mode transitions and macOS material rendering.
-- **Core Engine**: Ollama REST API integration over local Unix sockets/HTTP.
-- **Embeddings & Vector Math**: Accelerate framework cosine similarity calculations.
+- **Core Engine**: Ollama REST API integration over local HTTP (`127.0.0.1:11434`).
+- **Embeddings & Vector Math**: Apple `Accelerate` framework (`vDSP`) SIMD vector dot product and cosine similarity calculations.
 - **Speech & Audio**: Apple `AVFoundation` and `Speech` framework (`requiresOnDeviceRecognition = true`).
 - **Build System**: Swift Package Manager (SPM) with universal binary packaging (`x86_64` and `arm64`).
+
+---
+
+## 🔒 Privacy & Network Boundaries
+
+- **100% On-Device / Zero Network**: Text chat, document Q&A/RAG, memory storage, and voice dictation execute entirely on your Mac with zero telemetry or network calls.
+- **Optional Network Access**: The first-time engine installer (downloads Ollama if missing), optional web search (DuckDuckGo HTML query when requested), and online image generation (Pollinations AI fallback) use outbound HTTPS only when triggered.
 
 ---
 

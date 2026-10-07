@@ -5,6 +5,7 @@
  */
 
 import Foundation
+import Accelerate
 
 /// Turns text into vectors via Ollama's `/api/embed`, for semantic retrieval of
 /// remembered facts.
@@ -86,7 +87,7 @@ enum EmbeddingService {
         return decoded.embeddings
     }
 
-    /// Cosine similarity of two vectors, in −1...1.
+    /// Cosine similarity of two vectors, in −1...1, accelerated via Apple's Accelerate framework.
     ///
     /// Guards against zero-magnitude vectors, which would otherwise divide by
     /// zero and produce NaN — and a NaN score silently sorts unpredictably,
@@ -94,12 +95,16 @@ enum EmbeddingService {
     static func cosineSimilarity(_ lhs: [Double], _ rhs: [Double]) -> Double {
         guard lhs.count == rhs.count, !lhs.isEmpty else { return 0 }
 
-        var dot = 0.0, lhsMagnitude = 0.0, rhsMagnitude = 0.0
-        for index in lhs.indices {
-            dot += lhs[index] * rhs[index]
-            lhsMagnitude += lhs[index] * lhs[index]
-            rhsMagnitude += rhs[index] * rhs[index]
-        }
+        let count = vDSP_Length(lhs.count)
+        var dot = 0.0
+        vDSP_dotprD(lhs, 1, rhs, 1, &dot, count)
+
+        var lhsMagnitude = 0.0
+        vDSP_dotprD(lhs, 1, lhs, 1, &lhsMagnitude, count)
+
+        var rhsMagnitude = 0.0
+        vDSP_dotprD(rhs, 1, rhs, 1, &rhsMagnitude, count)
+
         guard lhsMagnitude > 0, rhsMagnitude > 0 else { return 0 }
         return dot / (lhsMagnitude.squareRoot() * rhsMagnitude.squareRoot())
     }

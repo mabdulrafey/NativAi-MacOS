@@ -48,6 +48,7 @@ private struct ChatContentView: View {
     /// state with no meaning outside this screen, and tying its lifetime to the
     /// view guarantees the audio engine is torn down when the chat closes.
     @StateObject private var dictation = DictationService()
+    @ObservedObject private var perfMonitor = PerformanceMonitor.shared
     @State private var draftText: String = ""
     @State private var pendingAttachments: [MessageAttachment] = []
     @State private var attachmentError: String?
@@ -90,7 +91,20 @@ private struct ChatContentView: View {
 
             Spacer()
 
-
+            if perfMonitor.isStreaming && perfMonitor.tokensPerSecond > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "bolt.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                    Text(String(format: "%.1f tok/s", perfMonitor.tokensPerSecond))
+                        .font(.caption2.monospacedDigit().weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Color.secondary.opacity(0.1))
+                .clipShape(Capsule())
+            }
 
             // Session Export Menu
             if let currentSession = viewModel.session(for: sessionId) {
@@ -408,13 +422,10 @@ private struct ChatContentView: View {
             pendingAttachments.append(MessageAttachment(fileName: url.lastPathComponent, kind: .image, imageData: data))
         } else if let utType, utType.conforms(to: .pdf) {
             let text = extractPDFText(from: url) ?? ""
-            let pages = PDFVisualExtractor.extractPages(from: url, maxPages: 1)
-            let firstPageData = pages.first?.pngData
             attachmentError = nil
             pendingAttachments.append(MessageAttachment(
                 fileName: url.lastPathComponent,
                 kind: .textFile,
-                imageData: firstPageData,
                 extractedText: text.isEmpty ? "PDF Document: \(url.lastPathComponent)" : text
             ))
         } else if let text = try? String(contentsOf: url, encoding: .utf8) {
