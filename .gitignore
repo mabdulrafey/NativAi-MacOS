@@ -22,10 +22,10 @@ Icon?
 *.pth
 *.pt
 *.tflite
-/models/
+/models_weights/
+/weights/
 data/
 cache/
-!Sources/NativAI/Models/
 
 # Xcode & Swift Package Manager Build Outputs
 .build/

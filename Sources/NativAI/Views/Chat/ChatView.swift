@@ -415,10 +415,13 @@ private struct ChatContentView: View {
             pendingAttachments.append(MessageAttachment(fileName: url.lastPathComponent, kind: .image, imageData: data))
         } else if let utType, utType.conforms(to: .pdf) {
             let text = extractPDFText(from: url) ?? ""
+            let pages = PDFVisualExtractor.extractPages(from: url, maxPages: 1)
+            let firstPageData = pages.first?.pngData
             attachmentError = nil
             pendingAttachments.append(MessageAttachment(
                 fileName: url.lastPathComponent,
                 kind: .textFile,
+                imageData: firstPageData,
                 extractedText: text.isEmpty ? "PDF Document: \(url.lastPathComponent)" : text
             ))
         } else if let text = try? String(contentsOf: url, encoding: .utf8) {

@@ -59,7 +59,8 @@ struct NativAIApp: App {
                     // @StateObject appState, so it needs this explicit hand-
                     // off before applicationShouldTerminate can read
                     // stopOllamaOnQuit.
-                    appDelegate.appState = appState
+                                        appDelegate.appState = appState
+                    QuickAskManager.shared.setup(appState: appState)
                 }
         }
         .windowStyle(.hiddenTitleBar)
@@ -92,6 +93,11 @@ struct NativAIApp: App {
                     NotificationCenter.default.post(name: Notification.Name("NativAISystemExportSession"), object: nil)
                 }
                 .keyboardShortcut("e", modifiers: .command)
+
+                Button("Quick Ask & Debug...") {
+                    QuickAskManager.shared.togglePanel()
+                }
+                .keyboardShortcut("k", modifiers: [.command, .shift])
             }
         }
     }

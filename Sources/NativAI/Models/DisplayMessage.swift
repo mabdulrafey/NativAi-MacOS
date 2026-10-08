@@ -6,27 +6,24 @@
 
 import Foundation
 
-/// A single message displayed within a chat transcript.
-public struct DisplayMessage: Identifiable, Codable, Equatable, Sendable {
-    public var id: UUID
-    public var role: String
-    public var content: String
-    public var isImage: Bool
-    public var imageData: Data?
-    public var modelUsed: String?
-    public var attachments: [MessageAttachment]
-    public var createdAt: Date
+/// A single message bubble in the chat transcript.
+struct DisplayMessage: Identifiable, Codable, Equatable {
+    let id: UUID
+    let role: String        // "user" | "assistant"
+    var content: String
+    var isImage: Bool       // true if this bubble should render image data instead of text
+    var imageData: Data?    // populated when isImage == true
+    /// Which real installed model actually generated this message. Only set
+    /// on assistant messages when Auto mode routed the request — lets each
+    /// response show exactly which model answered, rather than relying on a
+    /// single session-wide "last routed model" value that can't reflect a
+    /// conversation where different messages were routed to different models.
+    var modelUsed: String?
+    /// Files the user attached to this message (images for vision models,
+    /// text/code files whose content gets injected into the prompt).
+    var attachments: [MessageAttachment]
 
-    public init(
-        id: UUID = UUID(),
-        role: String,
-        content: String,
-        isImage: Bool = false,
-        imageData: Data? = nil,
-        modelUsed: String? = nil,
-        attachments: [MessageAttachment] = [],
-        createdAt: Date = Date()
-    ) {
+    init(id: UUID = UUID(), role: String, content: String, isImage: Bool, imageData: Data? = nil, modelUsed: String? = nil, attachments: [MessageAttachment] = []) {
         self.id = id
         self.role = role
         self.content = content
@@ -34,22 +31,6 @@ public struct DisplayMessage: Identifiable, Codable, Equatable, Sendable {
         self.imageData = imageData
         self.modelUsed = modelUsed
         self.attachments = attachments
-        self.createdAt = createdAt
-    }
-
-    public enum CodingKeys: String, CodingKey {
-        case id, role, content, isImage, imageData, modelUsed, attachments, createdAt
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
-        self.role = try container.decode(String.self, forKey: .role)
-        self.content = try container.decode(String.self, forKey: .content)
-        self.isImage = try container.decodeIfPresent(Bool.self, forKey: .isImage) ?? false
-        self.imageData = try container.decodeIfPresent(Data.self, forKey: .imageData)
-        self.modelUsed = try container.decodeIfPresent(String.self, forKey: .modelUsed)
-        self.attachments = try container.decodeIfPresent([MessageAttachment].self, forKey: .attachments) ?? []
-        self.createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
     }
 }
+

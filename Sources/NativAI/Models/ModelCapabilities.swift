@@ -6,90 +6,78 @@
 
 import Foundation
 
-/// Specific task capability reported by the server or detected by probes.
-public enum ModelCapability: String, Codable, Hashable, CaseIterable, Identifiable, Sendable {
-    case image
+/// A capability a model can satisfy, as reported by the local Ollama server.
+///
+/// Deliberately mirrors Ollama's own `capabilities` strings from
+/// `POST /api/show` (verified live against 0.32.5, which returns e.g.
+/// `["completion"]` for llama3:8b and `["completion","tools"]` for
+/// qwen2.5:1.5b). Using the server's vocabulary rather than inventing our own
+/// means capability discovery needs no hardcoded model-name lists — the whole
+/// point of routing on capabilities instead of names.
+///
+/// Verified live against Ollama 0.32.5: `x/flux2-klein:4b` reports
+/// `["image"]`, `moondream:1.8b` reports `["completion","vision"]`, and
+/// `llama3:8b` reports `["completion"]`. Image generation *is* reported by the
+/// server after all, so no capability here needs to be inferred from the
+/// catalog — which is what makes "don't hardcode model names" achievable.
+enum ModelCapability: String, Codable, Hashable, CaseIterable, Sendable {
+    case completion
     case vision
-    case embedding
     case tools
+    case embedding
     case thinking
     case insert
-    case completion
+    /// Text-to-image generation. Reported by the server as "image".
+    case image
 
-    public var id: String { rawValue }
-
-    public init?(serverString: String) {
-        let lower = serverString.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        if let match = ModelCapability(rawValue: lower) {
-            self = match
-        } else {
-            switch lower {
-            case "chat", "generate", "text":
-                self = .completion
-            case "embed", "embeddings":
-                self = .embedding
-            case "tool_use", "function", "tool":
-                self = .tools
-            case "reasoning", "thought":
-                self = .thinking
-            default:
-                return nil
-            }
-        }
-    }
-
-    public var displayName: String {
-        switch self {
-        case .image: return "Image Generation"
-        case .vision: return "Vision"
-        case .embedding: return "Embedding"
-        case .tools: return "Tool Calling"
-        case .thinking: return "Reasoning"
-        case .insert: return "Insert"
-        case .completion: return "Chat"
-        }
+    /// Maps an unrecognized server string to nil rather than throwing, so a
+    /// future Ollama release adding a new capability can't break decoding.
+    nonisolated init?(serverString: String) {
+        guard let match = ModelCapability(rawValue: serverString) else { return nil }
+        self = match
     }
 }
 
-/// Capability and metadata descriptor for an installed model.
-public struct ModelCapabilities: Codable, Equatable, Sendable {
-    public static let fallbackContextLength: Int = 4096
+/// Everything we know about an installed model's actual runtime abilities,
+/// resolved from the live server rather than guessed from its name.
+nonisolated struct ModelCapabilities: Codable, Equatable, Sendable {
+    let modelName: String
+    let capabilities: Set<ModelCapability>
+    /// The model's true maximum context window in tokens, read from
+    /// `model_info["<arch>.context_length"]`.
+    let contextLength: Int
+    let family: String?
+    /// Parameter count string as reported by Ollama (e.g. "8.0B"), useful as a
+    /// quality tie-breaker when ranking candidates.
+    let parameterSize: String?
 
-    public let modelName: String
-    public var capabilities: Set<ModelCapability>
-    public let contextLength: Int
-    public let family: String?
-    public let parameterSize: String?
-
-    public init(
-        modelName: String,
-        capabilities: Set<ModelCapability>,
-        contextLength: Int = 4096,
-        family: String? = nil,
-        parameterSize: String? = nil
-    ) {
-        self.modelName = modelName
-        self.capabilities = capabilities
-        self.contextLength = contextLength
-        self.family = family
-        self.parameterSize = parameterSize
-    }
-
-    public var supportsVision: Bool {
-        capabilities.contains(.vision)
-    }
-
-    public func supports(_ capability: ModelCapability) -> Bool {
+    func supports(_ capability: ModelCapability) -> Bool {
         capabilities.contains(capability)
     }
 
-    public static func unknown(modelName: String) -> ModelCapabilities {
-        ModelCapabilities(
+    var supportsVision: Bool { supports(.vision) }
+    var supportsImageGeneration: Bool { supports(.image) }
+    /// Can hold a normal text conversation. Image-only models cannot — Flux
+    /// reports `["image"]` with no `completion`, so sending chat turns to it
+    /// would fail or return nonsense.
+    var supportsChat: Bool { supports(.completion) }
+
+    /// Conservative default for when a probe fails entirely. 4096 matches
+    /// Ollama's own fallback behaviour, so this degrades to today's status quo
+    /// rather than to something broken.
+    static let fallbackContextLength = 4096
+
+    static func unknown(modelName: String) -> ModelCapabilities {
+        let lower = modelName.lowercased()
+        let isVision = lower.contains("llava") || lower.contains("vision") || lower.contains("moondream") || lower.contains("bakllava") || lower.contains("qwen2-vl") || lower.contains("minicpm-v")
+        let caps: Set<ModelCapability> = isVision ? [.completion, .vision] : [.completion]
+        return ModelCapabilities(
             modelName: modelName,
-            capabilities: [.completion],
+            capabilities: caps,
             contextLength: fallbackContextLength,
             family: nil,
             parameterSize: nil
         )
     }
 }
+

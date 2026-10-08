@@ -216,4 +216,49 @@ enum DocumentRAGService {
         output += "--- [End of Relevant Document Excerpts] ---\n"
         return output
     }
+
+    /// Indexes and queries a local project workspace folder completely offline.
+    static func queryWorkspace(prompt: String, workspaceURL: URL) async -> String {
+        let fileManager = FileManager.default
+        let allowedExtensions = ["swift", "py", "js", "ts", "json", "md", "cpp", "h", "c", "java", "kt", "go", "rs", "txt", "sh", "yml", "yaml"]
+
+        var fileList: [String] = []
+        var fullFileContext = ""
+        var fileCount = 0
+
+        if let enumerator = fileManager.enumerator(at: workspaceURL, includingPropertiesForKeys: [.fileSizeKey]) {
+            for case let fileURL as URL in enumerator {
+                let path = fileURL.path
+                if path.contains("/.git/") || path.contains("/.build/") || path.contains("/node_modules/") {
+                    continue
+                }
+
+                let ext = fileURL.pathExtension.lowercased()
+                if allowedExtensions.contains(ext) {
+                    let relativePath = fileURL.path.replacingOccurrences(of: workspaceURL.path + "/", with: "")
+                    fileList.append(relativePath)
+                    fileCount += 1
+
+                    if fileCount <= 15, let content = try? String(contentsOf: fileURL, encoding: .utf8), !content.isEmpty {
+                        let truncatedContent = content.count > 3000 ? String(content.prefix(3000)) + "\n... (truncated)" : content
+                        fullFileContext += "\n--- File: \(relativePath) ---\n\(truncatedContent)\n"
+                    }
+                }
+            }
+        }
+
+        guard !fileList.isEmpty else { return "" }
+
+        var context = "AUTHORITATIVE KNOWLEDGE GROUNDING DIRECTIVE: You have been granted full access to local workspace '\(workspaceURL.lastPathComponent)'. Speak with senior expert authority using the exact code and files below:\n\n"
+        context += "📁 Workspace Directory: \(workspaceURL.lastPathComponent)\n"
+        context += "Files in workspace (\(fileList.count)):\n"
+        for file in fileList {
+            context += "• \(file)\n"
+        }
+        context += "\n--- [Workspace Source Code & Documents] ---\n"
+        context += fullFileContext
+        context += "\n--- [End of Workspace Context] ---\n"
+
+        return context
+    }
 }

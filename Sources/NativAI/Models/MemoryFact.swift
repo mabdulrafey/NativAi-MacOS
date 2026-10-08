@@ -6,84 +6,86 @@
 
 import Foundation
 
-/// A remembered fact extracted from conversations for cross-session personalization.
-public struct MemoryFact: Identifiable, Codable, Equatable, Sendable {
-    public enum Kind: String, Codable, CaseIterable, Sendable {
-        case project
-        case preference
-        case identity
-        case general
+/// A durable fact the user has stated about themselves, their work, or their
+/// preferences — remembered across conversations.
+struct MemoryFact: Identifiable, Codable, Equatable, Sendable {
 
-        public var displayName: String {
+    enum Kind: String, Codable, Sendable, CaseIterable {
+        /// A stable preference ("prefers concise answers", "writes Swift").
+        case preference
+        /// Who the user is or works with ("co-founder is Priya").
+        case identity
+        /// A project, goal, or ongoing piece of work.
+        case project
+
+        var displayName: String {
             switch self {
-            case .project: return "Project"
             case .preference: return "Preference"
-            case .identity: return "Identity"
-            case .general: return "General"
+            case .identity: return "About you"
+            case .project: return "Project"
             }
         }
 
-        public var symbolName: String {
+        var symbolName: String {
             switch self {
-            case .project: return "folder.fill"
             case .preference: return "slider.horizontal.3"
-            case .identity: return "person.fill"
-            case .general: return "info.circle.fill"
+            case .identity: return "person.crop.circle"
+            case .project: return "folder"
             }
         }
     }
 
-    public var id: UUID
-    public var text: String
-    public var kind: Kind
-    public var sourceSessionId: UUID?
-    public var embedding: [Double]?
-    public var createdAt: Date
+    let id: UUID
+    /// The fact in one short sentence, third person ("The user's budget is $12,000").
+    var text: String
+    let kind: Kind
+    /// Session this was learned from, so the user can see where a fact came from.
+    let sourceSessionId: UUID?
+    let createdAt: Date
 
-    public init(
+    /// Cached embedding for semantic retrieval.
+    ///
+    /// Stored rather than recomputed because embedding is a model call: with 50
+    /// facts, re-embedding the whole store on every message would add a
+    /// noticeable stall to each turn. Optional so a store written before an
+    /// embedding model was installed still loads, and can be embedded later.
+    var embedding: [Double]?
+
+    init(
         id: UUID = UUID(),
         text: String,
         kind: Kind,
         sourceSessionId: UUID? = nil,
-        embedding: [Double]? = nil,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        embedding: [Double]? = nil
     ) {
         self.id = id
         self.text = text
         self.kind = kind
         self.sourceSessionId = sourceSessionId
-        self.embedding = embedding
         self.createdAt = createdAt
+        self.embedding = embedding
     }
 
-    public enum CodingKeys: String, CodingKey {
-        case id, text, kind, sourceSessionId, embedding, createdAt
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
-        self.text = try container.decode(String.self, forKey: .text)
-        self.kind = try container.decode(Kind.self, forKey: .kind)
-        self.sourceSessionId = try container.decodeIfPresent(UUID.self, forKey: .sourceSessionId)
-        self.embedding = try container.decodeIfPresent([Double].self, forKey: .embedding)
-        self.createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
-    }
-
-    /// Normalized representation for robust deduplication and comparison.
-    public var normalized: String {
-        var filtered = ""
-        for ch in text.lowercased() {
-            if ch == "'" || ch == "’" {
-                // Drop apostrophes so "user's" becomes "users"
-                continue
-            } else if ch.isLetter || ch.isNumber {
-                filtered.append(ch)
-            } else {
-                // Treat all other punctuation and symbols as space
-                filtered.append(" ")
-            }
-        }
-        return filtered.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    /// Normalised form used for duplicate detection.
+    ///
+    /// Small models restate the same fact with trivial variation across turns
+    /// ("The user's budget is 12000 dollars." vs "the users budget is $12,000"),
+    /// so exact string comparison would let the store fill with near-copies that
+    /// then crowd out genuinely distinct facts in the retrieval window.
+    ///
+    /// Apostrophes are stripped rather than treated as separators, so possessives
+    /// collapse onto their plural spelling ("user's" and "users" both become
+    /// "users"). Splitting on them instead produced "user s", which failed to
+    /// match the most common phrasing the extractor emits — the exact case that
+    /// let duplicates through.
+    var normalized: String {
+        text.lowercased()
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "\u{2019}", with: "")
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
     }
 }
+

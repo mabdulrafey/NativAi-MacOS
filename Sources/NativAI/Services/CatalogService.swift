@@ -148,24 +148,11 @@ final class CatalogService {
             $0.role == role && $0.useCases.contains(useCase)
         }
 
-        // On 8GB machines (totalRAMGB <= 8.5), strictly enforce max 4B parameter ceiling.
-        // Recommending > 4B on an 8GB Mac exhausts unified memory, triggering destructive SSD swap.
-        let eligible = candidates.filter { model in
-            if specs.totalRAMGB <= 8.5 {
-                if let params = model.parameterCountBillions, params > 4.0 {
-                    return false
-                }
-                if model.sizeGB > 3.0 {
-                    return false
-                }
-            }
-            return true
-        }
-
-        let runnable = eligible.filter { $0.compatibility(for: specs) != .unsupported }
+        let runnable = candidates.filter { $0.compatibility(for: specs) != .unsupported }
         guard !runnable.isEmpty else {
-            // Nothing comfortably fits — fall back to the smallest eligible candidate
-            return eligible.sorted { $0.sizeGB < $1.sizeGB }.first
+            // Nothing comfortably fits — fall back to the smallest candidate overall
+            // so we always suggest *something*, clearly marked unsupported/slow.
+            return candidates.sorted { $0.sizeGB < $1.sizeGB }.first
         }
 
         // Prefer "fits" over "slow", then prefer the largest (assumed higher quality) within that tier.
