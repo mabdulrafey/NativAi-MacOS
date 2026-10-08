@@ -97,7 +97,12 @@ rm -rf "${BUILD_DIR}"
 RELEASE_BIN=""
 
 # Preferred path: SwiftPM with both architectures.
-if ( cd "${SCRIPT_DIR}" && swift build -c release --arch arm64 --arch x86_64 ) 2>/dev/null; then
+PLUGIN_FLAG=""
+if [[ -d "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins" ]]; then
+    PLUGIN_FLAG="-Xswiftc -plugin-path -Xswiftc /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins"
+fi
+
+if ( cd "${SCRIPT_DIR}" && swift build -c release --arch arm64 --arch x86_64 ${PLUGIN_FLAG} ) 2>/dev/null; then
     RELEASE_BIN="${SCRIPT_DIR}/.build/apple/Products/Release/${BIN_NAME}"
     [[ -f "${RELEASE_BIN}" ]] || RELEASE_BIN="${SCRIPT_DIR}/.build/release/${BIN_NAME}"
     echo "  ✔ Built universal via swift build"
