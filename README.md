@@ -93,14 +93,13 @@ bash build_pkg.sh
 
 This will compile universal binaries for `arm64` and `x86_64`, assemble the `.app` bundle, and generate `NativAI-1.0.0.pkg`.
 
-### Option B: Build via Swift Package Manager
+### Option B: Build & Test via Swift Package Manager
 ```bash
+# Build the native app:
 swift build -c release
-```
 
-To run unit tests:
-```bash
-swift test
+# Run the full 110-test verification suite:
+./test.sh
 ```
 
 ---

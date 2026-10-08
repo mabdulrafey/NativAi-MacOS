@@ -52,6 +52,7 @@ Sources/NativAI/
 │   ├── ModelScorer.swift               # Capability matching with 1.8x model stickiness margin
 │   ├── CapabilityProbe.swift           # Dynamic /api/show capability discovery
 │   ├── DocumentRAGService.swift        # In-memory document chunking & retrieval
+│   ├── PDFVisualExtractor.swift        # PDF visual card & page extraction
 │   ├── EmbeddingService.swift          # Accelerate framework (vDSP) SIMD vector dot product
 │   ├── MemoryStore.swift               # Persistent long-term memory store
 │   ├── MemoryExtractor.swift           # Rule-based preference/fact extraction
@@ -63,11 +64,13 @@ Sources/NativAI/
 │   ├── DictationService.swift          # On-device Speech-to-Text via Speech framework
 │   ├── WebSearchService.swift          # DuckDuckGo HTML scraper & weather lookups
 │   ├── ImageGenerationService.swift    # Hybrid Pollinations AI & offline vector canvas art
+│   ├── LocalCodeSandboxService.swift   # Sandboxed local code interpreter runner
+│   ├── QuickAskManager.swift           # System-wide floating prompt supervisor
 │   ├── PerformanceMonitor.swift        # Real-time token generation throughput tracker
 │   ├── ContextualReferenceResolver.swift # Resolves natural language back-references
 │   ├── ChatHistoryStore.swift          # JSON persistence for chat sessions
 │   ├── ChatTitleGenerator.swift        # Lightweight prompt titling
-│   ├── SessionExportService.swift      # Session transcript export
+│   ├── SessionExportService.swift      # Multi-page CoreText paginated PDF, Markdown & HTML export
 │   └── FormattingHelpers.swift         # Byte and token formatting utilities
 │
 ├── Views/                              # Native SwiftUI UI Layer
@@ -76,12 +79,26 @@ Sources/NativAI/
 │   ├── Chat/                           # ChatView, ChatViewModel, Transcript, Composer, GapCard
 │   ├── Installed/                      # Installed model management, delete actions, size tracking
 │   ├── Onboarding/                     # Welcome flow, hardware tier profiling, model recommendations
+│   ├── QuickAsk/                       # Floating global quick ask spotlight panel
 │   ├── Settings/                       # Device specs, system status, storage breakdown, uninstaller
 │   └── Storage/                        # Disk usage inspector and model cleanup tools
 │
 ├── Resources/                          # Bundled Resources
 │   └── catalog.json                    # Curated base model metadata catalog
 │
+├── Tests/NativAICoreTests/             # 110-Test Offline Verification Suite
+│   ├── RoutingFastPathTests.swift      # Deterministic router & edge-case intent tests
+│   ├── ModelScorerTests.swift          # Hardware compatibility & stickiness tests
+│   ├── ChatSessionTests.swift          # Multi-page PDF export & session lifecycle tests
+│   ├── DocumentRAGServiceTests.swift   # Vector similarity & text chunking tests
+│   ├── SessionArtifactTests.swift      # Visual artifact ledger & ordinal references
+│   ├── TokenBudgetTests.swift          # Context window allocation & trim tests
+│   ├── MemoryTests.swift               # Long-term preference store & retrieval tests
+│   └── ConversationDigestTests.swift   # Chat history compaction & token capping tests
+│
+├── build_pkg.sh                        # Universal installer builder (.pkg)
+├── test.sh                             # Automated test suite runner (110 tests)
+├── uninstall.sh                        # Complete uninstaller script
 └── AppState.swift                      # Central reactive application state store
 ```
 
