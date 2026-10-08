@@ -125,6 +125,9 @@ enum SemanticRouter {
         }
 
         // 4. Historical, Factual, Text History & Conversational Elaboration Follow-ups
+        let visualNounPattern = #"\b(images?|pictures?|photos?|pics?|photographs?|snapshots?|screenshots?|drawings?|illustrations?|logos?)\b"#
+        let hasVisualNoun = matches(visualNounPattern)
+
         let factPattern = #"\b(fun\s*facts?|trivia|interesting\s+facts?|cool\s+facts?|random\s+facts?|facts?\s+about|info(rmation)?\s+about|details?\s+about|overview\s+of|background\s+of|history\s+of)\b"#
         let aboutReferencedPattern = #"\b(about\s+(those|these|them|that|this)(\s+(places?|locations?|cities|countries|landmarks?|options?|names?|items?|brands?|ideas?|suggestions?))?)\b"#
         let tellMeAboutPattern = #"\b(tell\s+me\s+(more\s+)?about\s+(those|these|them|that|this))\b"#
@@ -148,10 +151,12 @@ enum SemanticRouter {
             "what are those", "where are those", "who are those", "who are they",
             "what are these", "where are these", "who are these"
         ]
-        if factAndElaborationPhrases.contains(where: { lower.contains($0) })
+        if !hasVisualNoun && (
+            factAndElaborationPhrases.contains(where: { lower.contains($0) })
             || matches(factPattern)
             || (matches(aboutReferencedPattern) && !matches(creationVerbsCheck))
-            || matches(tellMeAboutPattern) {
+            || matches(tellMeAboutPattern)
+        ) {
             return (.general, false)
         }
 

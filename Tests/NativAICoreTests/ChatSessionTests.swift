@@ -1,4 +1,5 @@
 import XCTest
+import PDFKit
 
 /// Covers session persistence and title lifecycle.
 ///
@@ -206,4 +207,28 @@ final class ChatSessionTests: XCTestCase {
         )
         XCTAssertNil(ChatSession.label(fromPrompt: nil))
     }
+
+    func testMultiPagePDFExportDoesNotTruncateLongConversations() throws {
+        var session = ChatSession(title: "Long Conversation Test", modelName: "llama3.2:3b")
+        for i in 1...25 {
+            session.messages.append(DisplayMessage(role: "user", content: "User question number \(i) with several details.", isImage: false))
+            session.messages.append(DisplayMessage(role: "assistant", content: "Assistant response number \(i): Here are extensive suggestions and explanation details to test multi-page pagination.", isImage: false, modelUsed: "llama3.2:3b"))
+        }
+
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_session_export_\(UUID().uuidString).pdf")
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        SessionExportService.exportToPDF(session: session, to: tempURL)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: tempURL.path), "PDF file should be created")
+        if let pdfDoc = PDFDocument(url: tempURL) {
+            XCTAssertGreaterThan(pdfDoc.pageCount, 1, "A 50-turn conversation must span across multiple pages without clipping")
+            let fullText = (0..<pdfDoc.pageCount).compactMap { pdfDoc.page(at: $0)?.string }.joined(separator: " ")
+            XCTAssertTrue(fullText.contains("User question number 25"), "Last message in the conversation must be present in the PDF")
+            XCTAssertTrue(fullText.contains("Assistant response number 25"), "Last assistant turn must not be truncated")
+        } else {
+            XCTFail("Failed to load generated PDF with PDFKit")
+        }
+    }
 }
+

@@ -7,6 +7,7 @@
 import Foundation
 import AppKit
 import PDFKit
+import CoreText
 import UniformTypeIdentifiers
 
 /// Handles exporting chat sessions into Markdown (.md), HTML (.html), and PDF (.pdf).
@@ -133,12 +134,140 @@ enum SessionExportService {
                 let content = exportToHTML(session: session)
                 try? content.write(to: url, atomically: true, encoding: .utf8)
             case .pdf:
-                let printView = NSTextView(frame: NSRect(x: 0, y: 0, width: 600, height: 800))
-                printView.string = exportToMarkdown(session: session)
-                let pdfData = printView.dataWithPDF(inside: printView.bounds)
-                try? pdfData.write(to: url)
+                exportToPDF(session: session, to: url)
             }
         }
+    }
+
+    /// Exports a chat session to a multi-page paginated PDF with full typography and no message truncation.
+    static func exportToPDF(session: ChatSession, to url: URL) {
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792) // Standard US Letter (8.5 x 11 in)
+        var mediaBox = pageRect
+
+        guard let consumer = CGDataConsumer(url: url as CFURL),
+              let context = CGContext(consumer: consumer, mediaBox: &mediaBox, nil) else {
+            return
+        }
+
+        let attrString = buildAttributedTranscript(session: session)
+        let framesetter = CTFramesetterCreateWithAttributedString(attrString as CFAttributedString)
+
+        let margin: CGFloat = 44
+        let footerHeight: CGFloat = 28
+        let textRect = CGRect(
+            x: margin,
+            y: margin,
+            width: pageRect.width - (margin * 2),
+            height: pageRect.height - (margin * 2) - footerHeight
+        )
+
+        var textRange = CFRange(location: 0, length: 0)
+        var pageIndex = 1
+
+        while textRange.location < attrString.length {
+            context.beginPage(mediaBox: &mediaBox)
+
+            // 1. Draw text frame using CoreText in flipped coordinate space
+            context.saveGState()
+            context.translateBy(x: 0, y: pageRect.height)
+            context.scaleBy(x: 1.0, y: -1.0)
+
+            let path = CGPath(rect: textRect, transform: nil)
+            let frame = CTFramesetterCreateFrame(framesetter, textRange, path, nil)
+            CTFrameDraw(frame, context)
+
+            let frameRange = CTFrameGetVisibleStringRange(frame)
+            if frameRange.length == 0 {
+                context.restoreGState()
+                context.endPage()
+                break
+            }
+            textRange.location += frameRange.length
+            context.restoreGState()
+
+            // 2. Draw running footer in bottom coordinate space
+            drawFooter(context: context, pageNumber: pageIndex, pageRect: pageRect, margin: margin)
+
+            context.endPage()
+            pageIndex += 1
+        }
+
+        context.closePDF()
+    }
+
+    private static func buildAttributedTranscript(session: ChatSession) -> NSAttributedString {
+        let full = NSMutableAttributedString()
+
+        let titleStyle = NSMutableParagraphStyle()
+        titleStyle.paragraphSpacing = 4
+        let titleAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.boldSystemFont(ofSize: 20),
+            .foregroundColor: NSColor.labelColor,
+            .paragraphStyle: titleStyle
+        ]
+        full.append(NSAttributedString(string: "\(session.title)\n", attributes: titleAttrs))
+
+        let metaStyle = NSMutableParagraphStyle()
+        metaStyle.paragraphSpacing = 18
+        let dateStr = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short)
+        let metaAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 10),
+            .foregroundColor: NSColor.secondaryLabelColor,
+            .paragraphStyle: metaStyle
+        ]
+        full.append(NSAttributedString(string: "Exported from NativAI on \(dateStr) · Model: \(session.modelName)\n\n", attributes: metaAttrs))
+
+        for msg in session.messages {
+            let isUser = msg.role == "user"
+            let badgeText = isUser ? "👤 User\n" : "🤖 NativAI (\(msg.modelUsed ?? session.modelName))\n"
+            let badgeColor = isUser ? NSColor.systemBlue : NSColor.systemPurple
+            let badgeAttrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.boldSystemFont(ofSize: 11),
+                .foregroundColor: badgeColor
+            ]
+            full.append(NSAttributedString(string: badgeText, attributes: badgeAttrs))
+
+            let contentStyle = NSMutableParagraphStyle()
+            contentStyle.lineSpacing = 3
+            contentStyle.paragraphSpacing = 16
+            let contentAttrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 11),
+                .foregroundColor: NSColor.labelColor,
+                .paragraphStyle: contentStyle
+            ]
+
+            let contentText = msg.content.isEmpty ? "(Visual Content / Image Attachment)" : msg.content
+            full.append(NSAttributedString(string: "\(contentText)\n", attributes: contentAttrs))
+
+            if let imgData = msg.imageData, let img = NSImage(data: imgData) {
+                let attachment = NSTextAttachment()
+                attachment.image = img
+                let maxW: CGFloat = 380
+                let scale = min(maxW / max(img.size.width, 1), 1.0)
+                attachment.bounds = CGRect(x: 0, y: 0, width: img.size.width * scale, height: img.size.height * scale)
+                full.append(NSAttributedString(attachment: attachment))
+                full.append(NSAttributedString(string: "\n\n"))
+            } else {
+                full.append(NSAttributedString(string: "\n"))
+            }
+        }
+
+        return full
+    }
+
+    private static func drawFooter(context: CGContext, pageNumber: Int, pageRect: CGRect, margin: CGFloat) {
+        let footerStr = NSAttributedString(
+            string: "Page \(pageNumber) · NativAI Local AI Manager",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 9),
+                .foregroundColor: NSColor.secondaryLabelColor
+            ]
+        )
+        let line = CTLineCreateWithAttributedString(footerStr as CFAttributedString)
+        context.saveGState()
+        context.textPosition = CGPoint(x: margin, y: 22)
+        CTLineDraw(line, context)
+        context.restoreGState()
     }
 
     enum ExportFormat {

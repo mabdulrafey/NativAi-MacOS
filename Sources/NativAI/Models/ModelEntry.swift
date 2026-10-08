@@ -6,39 +6,54 @@
 
 import Foundation
 
-/// A single model entry in the curated catalog (loaded from catalog.json).
-struct ModelEntry: Identifiable, Codable, Equatable {
-    var id: String { name }
+/// Machine compatibility level for a model given the host hardware profile.
+enum CompatibilityLevel: String, Codable, Equatable, Sendable {
+    case fits
+    case slow
+    case unsupported
 
-    let name: String                 // e.g. "qwen2.5-coder:7b"
-    let displayName: String          // e.g. "Qwen 2.5 Coder (7B)"
-    let category: [String]           // "coding", "research", "qa", "image_gen"
-    let role: String                 // "chat", "coder", "image"
-    let useCases: [String]           // "marketing", "coding", "research", "design", ...
+    var badge: String {
+        switch self {
+        case .fits: return "Fits comfortably"
+        case .slow: return "Will run, but slower"
+        case .unsupported: return "Not recommended"
+        }
+    }
+}
+
+/// A catalog entry describing an available or installed model.
+struct ModelEntry: Identifiable, Codable, Equatable, Hashable, Sendable {
+    let name: String
+    let displayName: String
+    let category: [String]
+    let role: String
+    let useCases: [String]
     let description: String
     let sizeGB: Double
     let minRAMGB: Double
     let minVRAMGB: Double
     let license: String
-    let commercialUse: Bool?
-    let speedTier: String?           // "fast", "medium", "slow" (mainly for image models)
-    /// True for vision-language models (llava, llama3.2-vision, etc.) that
-    /// can actually receive image bytes via Ollama's chat API and describe
-    /// what's in them. Defaults to false for any catalog entry that predates
-    /// this field, so existing entries decode fine without needing a
-    /// migration. This is distinct from role=="image", which means the model
-    /// GENERATES images — supportsVision means it can READ/understand them.
+    let commercialUse: Bool
+    let speedTier: String?
     let supportsVision: Bool
 
-    enum CodingKeys: String, CodingKey {
-        case name, displayName = "display_name", category, role
-        case useCases = "use_cases", description
-        case sizeGB = "size_gb", minRAMGB = "min_ram_gb", minVRAMGB = "min_vram_gb"
-        case license, commercialUse = "commercial_use", speedTier = "speed_tier"
-        case supportsVision = "supports_vision"
-    }
+    var id: String { name }
 
-    init(name: String, displayName: String, category: [String], role: String, useCases: [String], description: String, sizeGB: Double, minRAMGB: Double, minVRAMGB: Double, license: String, commercialUse: Bool?, speedTier: String?, supportsVision: Bool = false) {
+    init(
+        name: String,
+        displayName: String,
+        category: [String] = [],
+        role: String = "chat",
+        useCases: [String] = [],
+        description: String = "",
+        sizeGB: Double = 0.0,
+        minRAMGB: Double = 0.0,
+        minVRAMGB: Double = 0,
+        license: String = "Open Source",
+        commercialUse: Bool = true,
+        speedTier: String? = nil,
+        supportsVision: Bool = false
+    ) {
         self.name = name
         self.displayName = displayName
         self.category = category
@@ -54,80 +69,93 @@ struct ModelEntry: Identifiable, Codable, Equatable {
         self.supportsVision = supportsVision
     }
 
+    enum CodingKeys: String, CodingKey {
+        case name
+        case displayName = "display_name"
+        case category
+        case role
+        case useCases = "use_cases"
+        case description
+        case sizeGB = "size_gb"
+        case minRAMGB = "min_ram_gb"
+        case minVRAMGB = "min_vram_gb"
+        case license
+        case commercialUse = "commercial_use"
+        case speedTier = "speed_tier"
+        case supportsVision = "supports_vision"
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
-        displayName = try container.decode(String.self, forKey: .displayName)
-        category = try container.decode([String].self, forKey: .category)
-        role = try container.decode(String.self, forKey: .role)
-        useCases = try container.decode([String].self, forKey: .useCases)
-        description = try container.decode(String.self, forKey: .description)
-        sizeGB = try container.decode(Double.self, forKey: .sizeGB)
-        minRAMGB = try container.decode(Double.self, forKey: .minRAMGB)
-        minVRAMGB = try container.decode(Double.self, forKey: .minVRAMGB)
-        license = try container.decode(String.self, forKey: .license)
-        commercialUse = try container.decodeIfPresent(Bool.self, forKey: .commercialUse)
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName) ?? name
+        category = try container.decodeIfPresent([String].self, forKey: .category) ?? []
+        role = try container.decodeIfPresent(String.self, forKey: .role) ?? "chat"
+        useCases = try container.decodeIfPresent([String].self, forKey: .useCases) ?? []
+        description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
+        sizeGB = try container.decodeIfPresent(Double.self, forKey: .sizeGB) ?? 0.0
+        minRAMGB = try container.decodeIfPresent(Double.self, forKey: .minRAMGB) ?? (sizeGB * 1.5)
+        minVRAMGB = try container.decodeIfPresent(Double.self, forKey: .minVRAMGB) ?? 0.0
+        license = try container.decodeIfPresent(String.self, forKey: .license) ?? "Open Source"
+        commercialUse = try container.decodeIfPresent(Bool.self, forKey: .commercialUse) ?? true
         speedTier = try container.decodeIfPresent(String.self, forKey: .speedTier)
-        // Explicitly defaulted via decodeIfPresent ?? false — existing
-        // catalog.json entries have no "supports_vision" key at all, and
-        // without this fallback every one of them would fail to decode.
         supportsVision = try container.decodeIfPresent(Bool.self, forKey: .supportsVision) ?? false
     }
-}
 
-/// Compatibility verdict for a model against a given device, per the tiering
-/// rules we defined: fits comfortably / works but slower / not recommended.
-enum CompatibilityLevel: String {
-    case fits           // model fits within VRAM/RAM comfortably
-    case slow           // spills over, will run but slower
-    case unsupported     // exceeds both VRAM and RAM meaningfully
-
-    var badge: String {
-        switch self {
-        case .fits: return "✅ Fits comfortably"
-        case .slow: return "⚠️ Will run, but slower"
-        case .unsupported: return "🚫 Not recommended"
+    /// Estimated parameter count in billions, parsed from model name or display name.
+    var parameterCountBillions: Double? {
+        let patterns = [
+            #"(?i)(?:^|[:\(\s_e])(\d+(?:\.\d+)?)\s*b(?:\b|[\):\s]|$)"#,
+            #"(?i)(\d+(?:\.\d+)?)\s*b\b"#
+        ]
+        for text in [displayName, name] {
+            for pattern in patterns {
+                if let regex = try? NSRegularExpression(pattern: pattern),
+                   let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                   match.numberOfRanges > 1,
+                   let range = Range(match.range(at: 1), in: text),
+                   let value = Double(text[range]) {
+                    return value
+                }
+            }
         }
+        return nil
     }
-}
 
-extension ModelEntry {
-    /// Determines whether this model is a good, workable, or poor fit for the given specs.
+    /// Evaluates if and how well this model fits on the current device.
     func compatibility(for specs: DeviceSpecs) -> CompatibilityLevel {
-        let totalRAM = specs.totalRAMGB
-
-        // On constrained 8GB machines (e.g. M1 MacBook Air 8GB), macOS system overhead
-        // leaves only ~4GB free. Models > 3.5GB (like 7B/8B models) force NVMe disk swapping
-        // and run noticeably slower. They are marked "Will run, but slower" (.slow).
-        if totalRAM <= 8.5 {
-            if sizeGB <= 3.5 {
-                return .fits
-            } else if sizeGB <= 5.5 {
-                return .slow
-            } else {
-                return .unsupported
-            }
-        }
-
-        // On 16GB machines, models up to ~6.5GB fit comfortably without swapping.
-        if totalRAM <= 16.5 {
-            if sizeGB <= 6.5 {
-                return .fits
-            } else if sizeGB <= 12.0 || minRAMGB <= 16.0 {
-                return .slow
-            } else {
-                return .unsupported
-            }
-        }
-
-        // On >16GB machines (32GB+), models up to 14GB fit comfortably.
-        if sizeGB <= 14.0 || specs.vramGB >= minVRAMGB {
+        if specs.totalRAMGB <= 0 {
             return .fits
         }
-        if specs.totalRAMGB >= minRAMGB {
-            return .slow
+        // Tiered guardrail for 8GB Macs (≤ 8.5 GB RAM):
+        // 4B and below: "Fits comfortably" (.fits)
+        // Anything above 4B up to 7B: "Will run, but slower" (.slow)
+        // 8B and up: "Not recommended" (.unsupported, won't run)
+        if specs.totalRAMGB <= 8.5 {
+            if let params = parameterCountBillions {
+                if params >= 8.0 {
+                    return .unsupported
+                } else if params > 4.0 {
+                    return .slow
+                } else {
+                    return .fits
+                }
+            } else {
+                if sizeGB >= 4.8 {
+                    return .unsupported
+                } else if sizeGB > 2.8 {
+                    return .slow
+                } else {
+                    return .fits
+                }
+            }
         }
-        return .unsupported
+        if specs.totalRAMGB >= minRAMGB {
+            return .fits
+        } else if specs.totalRAMGB >= sizeGB {
+            return .slow
+        } else {
+            return .unsupported
+        }
     }
 }
-
