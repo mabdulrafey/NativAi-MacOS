@@ -125,6 +125,10 @@ enum SemanticRouter {
         }
 
         // 4. Historical, Factual, Text History & Conversational Elaboration Follow-ups
+        let factPattern = #"\b(fun\s*facts?|trivia|interesting\s+facts?|cool\s+facts?|random\s+facts?|facts?\s+about|info(rmation)?\s+about|details?\s+about|overview\s+of|background\s+of|history\s+of)\b"#
+        let aboutReferencedPattern = #"\b(about\s+(those|these|them|that|this)(\s+(places?|locations?|cities|countries|landmarks?|options?|names?|items?|brands?|ideas?|suggestions?))?)\b"#
+        let tellMeAboutPattern = #"\b(tell\s+me\s+(more\s+)?about\s+(those|these|them|that|this))\b"#
+
         let factAndElaborationPhrases = [
             "history about", "history of", "tell me history", "tell history",
             "explain the history", "background of", "background on", "historical context",
@@ -138,9 +142,16 @@ enum SemanticRouter {
             "more details on point", "expand on point", "expand on option",
             "why did you pick", "why did you choose", "why did you select", "why did you use",
             "tell me more about step", "tell me more about option", "tell me more about point",
-            "clarify what you meant"
+            "clarify what you meant", "fun fact", "fun facts", "funfact", "funfacts",
+            "did you know", "tell me a fact", "give me a fact", "interesting fact",
+            "tell me about those", "tell me about these", "tell me about them",
+            "what are those", "where are those", "who are those", "who are they",
+            "what are these", "where are these", "who are these"
         ]
-        if factAndElaborationPhrases.contains(where: { lower.contains($0) }) {
+        if factAndElaborationPhrases.contains(where: { lower.contains($0) })
+            || matches(factPattern)
+            || (matches(aboutReferencedPattern) && !matches(creationVerbsCheck))
+            || matches(tellMeAboutPattern) {
             return (.general, false)
         }
 
@@ -460,10 +471,13 @@ enum SemanticRouter {
     "needs_vision" is true ONLY if answering requires inspecting pixel visual details of an image in conversation (e.g. "what colors does it have", "what font is that", "is it readable"). Questions about text, sports stats, code, or historical facts NEVER need vision, so needs_vision is false.
 
     CRITICAL GUARDRAILS:
+    - Questions asking for facts, fun facts, trivia, information, history, places, names, suggestions, or explanations (e.g. "give me funfact about those places", "tell me facts about them") NEVER need vision. needs_vision MUST be false.
     - Mentions of famous people, celebrities, or athletes ("Ronaldo", "Messi", "Elon Musk", "Steve Jobs") WITHOUT explicit visual creation verbs ("draw", "generate an image of", "paint") MUST be classified as "general".
     - Sports comparisons ("messi vs ronaldo", "who has more ballon d'ors") and debate rebuttals ("but he hasn't", "I disagree") MUST be classified as "general".
 
     Examples:
+    "give me funfact about those places" -> {"intent":"general","needs_vision":false}
+    "tell me fun facts about that city" -> {"intent":"general","needs_vision":false}
     "Ronaldo" -> {"intent":"general","needs_vision":false}
     "messi vs ronaldo who has more ballon d'ors" -> {"intent":"general","needs_vision":false}
     "he hasn't scored as many goals as ronaldo" -> {"intent":"general","needs_vision":false}

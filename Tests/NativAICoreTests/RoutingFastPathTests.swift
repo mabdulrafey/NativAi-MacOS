@@ -140,6 +140,11 @@ final class RoutingFastPathTests: XCTestCase {
         assertClassified("explain that further", intent: .general, needsVision: false)
         assertClassified("why did you pick that color", intent: .general, needsVision: false)
         assertClassified("can you elaborate on point 2", intent: .general, needsVision: false)
+        assertClassified("give me funfact about those places", intent: .general, needsVision: false)
+        assertClassified("give me fun facts about those places", intent: .general, needsVision: false)
+        assertClassified("tell me facts about those places", intent: .general, needsVision: false)
+        assertClassified("tell me about those brands", intent: .general, needsVision: false)
+        assertClassified("trivia about Spain", intent: .general, needsVision: false)
     }
 
     // MARK: - Expanded Domain Precision Tests
